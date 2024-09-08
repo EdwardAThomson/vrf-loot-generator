@@ -82,7 +82,7 @@ Please go through the steps for section 1 first. You need to generate a keypair 
 
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.  (Apache like Google???)
+This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
 
 
 ## Acknowledgements
