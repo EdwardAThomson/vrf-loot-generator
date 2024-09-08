@@ -86,9 +86,8 @@ This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENS
 
 
 ## Acknowledgements
-- [React Documentation](https://reactjs.org/docs/getting-started.html)
-- [Bootstrap](https://getbootstrap.com/)
-- Special thanks to [contributor] for their help with [specific feature].
+- ChatGPT XD
+- Everyone at the Decentralized Gaming Association [DGA Discord](https://discord.com/invite/eZEVrSd)
 
 
 
