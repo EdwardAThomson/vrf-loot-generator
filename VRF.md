@@ -94,6 +94,5 @@ The verifier recalculates several elliptic curve points using the public informa
 
 ## References
 
-- [VRF in Blockchain Systems](https://en.wikipedia.org/wiki/Verifiable_random_function)
-- [Understanding VRFs](https://cryptography.fyi/vrfs.html)
-
+- [VRFs (Wikipedia)](https://en.wikipedia.org/wiki/Verifiable_random_function)
+- [VRF Explainer - Chainlink](https://chain.link/education-hub/verifiable-random-function-vrf)
