@@ -1,0 +1,131 @@
+.lootItem {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  /* Base shadow plus subtle rarity glow */
+  box-shadow: var(--shadow-sm), 0 0 var(--glow-base, 10px) -2px var(--rarity-color, transparent);
+  transition: all 0.2s ease;
+}
+
+.selectable {
+  cursor: pointer;
+}
+
+.selectable:hover {
+  border-color: var(--primary-color);
+  /* Stronger rarity glow on hover */
+  box-shadow: var(--shadow-md), 0 0 var(--glow-hover, 16px) -2px var(--rarity-color, transparent);
+}
+
+.selected {
+  border-color: var(--primary-color);
+  background-color: #f8f9ff;
+  /* Strongest rarity glow when selected */
+  box-shadow: var(--shadow-md), 0 0 var(--glow-selected, 22px) -2px var(--rarity-color, transparent);
+}
+
+/* Rarity variable + text color */
+.itemRarity {
+  color: var(--rarity-color, inherit);
+}
+
+.rarityCommon { 
+  --rarity-color: var(--rarity-common);
+  --glow-base: 6px;
+  --glow-hover: 10px;
+  --glow-selected: 14px;
+}
+.rarityRare { 
+  --rarity-color: var(--rarity-rare);
+  --glow-base: 8px;
+  --glow-hover: 14px;
+  --glow-selected: 18px;
+}
+.rarityEpic { 
+  --rarity-color: var(--rarity-epic);
+  --glow-base: 10px;
+  --glow-hover: 18px;
+  --glow-selected: 24px;
+}
+.rarityLegendary { 
+  --rarity-color: var(--rarity-legendary);
+  --glow-base: 12px;
+  --glow-hover: 22px;
+  --glow-selected: 30px;
+}
+
+.itemHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.itemIcon {
+  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: var(--border-radius);
+}
+
+.itemInfo { flex: 1; }
+
+.itemName {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.itemMeta {
+  display: flex;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}
+
+.itemType { color: var(--secondary-color); }
+
+.itemRarity { font-weight: 600; }
+
+.selectionIndicator {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.itemDetails {
+  background: #f8f9fa;
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+}
+
+.detailRow:last-child { margin-bottom: 0; }
+
+.detailLabel { font-weight: 500; color: var(--secondary-color); }
+
+.detailValue { font-family: monospace; color: #333; }
+
+.itemVerification { display: flex; align-items: center; gap: var(--spacing-sm); }
+
+.verificationBadge {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+}
+
+.valid { background: #d4edda; color: #155724; }
+
+.invalid { background: #f8d7da; color: #721c24; }
