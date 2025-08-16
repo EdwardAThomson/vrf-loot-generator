@@ -87,6 +87,20 @@ export class VRFService {
   }
 
   /**
+   * Get public key from private key
+   * @param privateKey - Private key in hex format
+   * @returns Public key in hex format
+   */
+  static getPublicKeyFromPrivate(privateKey: string): string {
+    try {
+      const keyPair = EC.keyFromPrivate(privateKey, 'hex');
+      return keyPair.getPublic('hex');
+    } catch (error) {
+      throw new Error(`Failed to derive public key: ${(error as Error).message}`);
+    }
+  }
+
+  /**
    * Evaluate VRF for given private key and message
    * @param privateKey - Private key (hex string)
    * @param message - Message to evaluate VRF for

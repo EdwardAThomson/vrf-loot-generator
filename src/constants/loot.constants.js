@@ -20,6 +20,16 @@ export const LOOT_CONSTANTS = {
     DAGGER: 'Dagger'
   },
 
+  // Item type icons
+  TYPE_ICONS: {
+    'Sword': '⚔️',
+    'Axe': '🪓',
+    'Shield': '🛡️',
+    'Bow': '🏹',
+    'Staff': '🔮',
+    'Dagger': '🗡️'
+  },
+
   // Item modifiers
   MODIFIERS: {
     FLAMING: 'Flaming',

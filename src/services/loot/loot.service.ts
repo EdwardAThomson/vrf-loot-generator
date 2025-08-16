@@ -44,9 +44,15 @@ export class LootService {
       // Generate unique ID using timestamp and random component
       const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
+      // Generate name and get icon
+      const name = `${modifier} ${type}`;
+      const icon = (LOOT_CONSTANTS.TYPE_ICONS as Record<string, string>)[type] || '⚔️';
+      
       return {
         id,
+        name,
         type,
+        icon,
         rarity,
         modifier,
         vrfData,
@@ -82,9 +88,10 @@ export class LootService {
         
         // Create VRF data for verification
         const vrfData: VRFData = {
-          publicKey: VRFService.generateKeyPair().publicKey, // This should be derived from privateKey
+          publicKey: VRFService.getPublicKeyFromPrivate(privateKey),
           proof: vrfResult.proof,
           message,
+          blockhash,
           vrfOutput: vrfResult.vrfOutput
         };
         

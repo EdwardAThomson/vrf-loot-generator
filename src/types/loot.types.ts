@@ -2,7 +2,9 @@
 
 export interface LootItem {
   id: string;
+  name: string;
   type: string;
+  icon: string;
   rarity: string;
   modifier: string;
   vrfData?: VRFData;
@@ -13,6 +15,7 @@ export interface VRFData {
   publicKey: string;
   proof: Uint8Array | string;
   message: string;
+  blockhash?: string;
   vrfOutput?: Uint8Array | string;
 }
 
