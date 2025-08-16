@@ -16,8 +16,11 @@ export class LootService {
    */
   static generateItem(vrfOutput: Uint8Array, vrfData?: VRFData): LootItem {
     try {
-      // Use the VRF output bytes to determine item properties
-      const bytes = new Uint8Array(vrfOutput);
+      // Hash the VRF output to get better byte distribution
+      // Elliptic curve points often start with similar bytes (0x04 for uncompressed)
+      const sha256 = require('js-sha256');
+      const hashedOutput = sha256.array(vrfOutput);
+      const bytes = new Uint8Array(hashedOutput);
       
       // Use different byte ranges for different properties to ensure independence
       const typeIndex = bytes[0] % Object.keys(LOOT_CONSTANTS.TYPES).length;
