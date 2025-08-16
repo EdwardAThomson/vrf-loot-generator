@@ -1,0 +1,27 @@
+.verificationActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.verificationResult {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  border: 1px solid;
+}
+
+.success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.failure {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.resultTitle { display: block; margin-bottom: var(--spacing-xs); }
+
+.resultText { margin: 0; font-size: var(--font-size-sm); }

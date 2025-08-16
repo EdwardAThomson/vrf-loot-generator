@@ -1,0 +1,58 @@
+.lootStats {
+  background: #f8f9fa;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.statsTitle {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: #333;
+}
+
+.statsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.statHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.statRarity { font-weight: 600; font-size: var(--font-size-sm); }
+
+.statCount { font-weight: 500; font-size: var(--font-size-sm); color: #333; }
+
+.statBar {
+  height: 6px;
+  background: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.statFill {
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 3px;
+}
+
+.statPercentage { font-size: var(--font-size-sm); color: var(--secondary-color); text-align: right; }
+
+.statsSummary {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid #dee2e6;
+  text-align: center;
+  font-size: var(--font-size-sm);
+}
