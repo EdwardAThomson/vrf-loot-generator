@@ -2,14 +2,17 @@
 import { useState, useCallback } from 'react';
 import { LootService } from '../services/loot/loot.service.js';
 import { LOOT_CONSTANTS } from '../constants/loot.constants.js';
+import { useInventoryStore } from '../store/index.js';
 
 /**
  * Custom hook for loot generation with error handling and loading states
  */
 export const useLootGeneration = () => {
-  const [generatedItems, setGeneratedItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Use Zustand store for inventory management
+  const { addItems, items: generatedItems, clearInventory } = useInventoryStore();
 
   // Generate multiple loot items
   const generateLoot = useCallback(async (privateKey, blockhash, count = LOOT_CONSTANTS.LIMITS.DEFAULT_ITEMS) => {
@@ -28,7 +31,7 @@ export const useLootGeneration = () => {
 
     try {
       const items = LootService.generateMultipleItems(privateKey, blockhash, count);
-      setGeneratedItems(items);
+      addItems(items);
       return items;
     } catch (err) {
       setError(`Loot generation failed: ${err.message}`);
@@ -36,7 +39,7 @@ export const useLootGeneration = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [addItems]);
 
   // Generate a single item
   const generateSingleItem = useCallback(async (vrfOutput, vrfData = null) => {
@@ -45,7 +48,7 @@ export const useLootGeneration = () => {
 
     try {
       const item = LootService.generateItem(vrfOutput, vrfData);
-      setGeneratedItems(prev => [...prev, item]);
+      addItems([item]);
       return item;
     } catch (err) {
       setError(`Item generation failed: ${err.message}`);
@@ -53,7 +56,7 @@ export const useLootGeneration = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [addItems]);
 
   // Verify an item
   const verifyItem = useCallback(async (item, publicKey) => {
@@ -73,9 +76,9 @@ export const useLootGeneration = () => {
 
   // Clear generated items
   const clearItems = useCallback(() => {
-    setGeneratedItems([]);
+    clearInventory();
     setError(null);
-  }, []);
+  }, [clearInventory]);
 
   // Clear error
   const clearError = useCallback(() => {

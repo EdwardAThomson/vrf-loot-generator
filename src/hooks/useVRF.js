@@ -4,43 +4,52 @@
 import { useState, useCallback } from 'react';
 import { VRFService } from '../services/vrf/vrf.service.js';
 import { toHexString, fromHexString } from '../utils/format.utils.js';
+import { useVRFStore } from '../store/index.js';
 
 /**
  * Custom hook for VRF operations with loading states and error handling
  */
 export const useVRF = () => {
-  const [keyPair, setKeyPair] = useState({ privateKey: '', publicKey: '' });
-  const [vrfResult, setVrfResult] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  // Use Zustand store for VRF state management
+  const { 
+    keyPair, 
+    testResult: vrfResult, 
+    isGenerating: isLoading, 
+    error,
+    setKeyPair: setStoreKeyPair,
+    setVRFResult,
+    setGenerating,
+    setError: setStoreError,
+    clearError
+  } = useVRFStore();
 
   // Generate new key pair
   const generateKeyPair = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+    setGenerating(true);
+    setStoreError(null);
     
     try {
       const newKeyPair = VRFService.generateKeyPair();
       // Keys are already hex strings from the service
-      setKeyPair(newKeyPair);
+      setStoreKeyPair(newKeyPair);
       return newKeyPair;
     } catch (err) {
-      setError(`Failed to generate key pair: ${err.message}`);
+      setStoreError(`Failed to generate key pair: ${err.message}`);
       throw err;
     } finally {
-      setIsLoading(false);
+      setGenerating(false);
     }
   }, []);
 
   // Compute VRF output
   const computeVRF = useCallback(async (privateKey, message) => {
     if (!privateKey || !message) {
-      setError('Private key and message are required');
+      setStoreError('Private key and message are required');
       return null;
     }
 
-    setIsLoading(true);
-    setError(null);
+    setGenerating(true);
+    setStoreError(null);
     
     try {
       const msgBuffer = new TextEncoder().encode(message);
@@ -55,25 +64,25 @@ export const useVRF = () => {
         messageHex: toHexString(msgBuffer)
       };
       
-      setVrfResult(formattedResult);
+      setVRFResult(formattedResult);
       return formattedResult;
     } catch (err) {
-      setError(`VRF computation failed: ${err.message}`);
+      setStoreError(`VRF computation failed: ${err.message}`);
       throw err;
     } finally {
-      setIsLoading(false);
+      setGenerating(false);
     }
   }, []);
 
   // Verify VRF proof
   const verifyVRF = useCallback(async (publicKeyHex, proofHex, message, expectedVrfOutputHex) => {
     if (!publicKeyHex || !proofHex || !message || !expectedVrfOutputHex) {
-      setError('All parameters are required for verification');
+      setStoreError('All parameters are required for verification');
       return false;
     }
 
-    setIsLoading(true);
-    setError(null);
+    setGenerating(true);
+    setStoreError(null);
     
     try {
       const msgBuffer = new TextEncoder().encode(message);
@@ -89,36 +98,31 @@ export const useVRF = () => {
       // Compare with expected VRF output (which should be the index)
       return computedIndexHex === expectedVrfOutputHex;
     } catch (err) {
-      setError(`VRF verification failed: ${err.message}`);
+      setStoreError(`VRF verification failed: ${err.message}`);
       return false;
     } finally {
-      setIsLoading(false);
+      setGenerating(false);
     }
   }, []);
 
   // Convert proof to hash
   const proofToHash = useCallback((proof) => {
     try {
-      setError(null);
+      setStoreError(null);
       return VRFService.proofToHash(proof);
     } catch (err) {
-      setError(`Proof to hash conversion failed: ${err.message}`);
+      setStoreError(`Proof to hash conversion failed: ${err.message}`);
       return null;
     }
   }, []);
 
-  // Clear error
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
   // Reset all state
   const reset = useCallback(() => {
-    setKeyPair({ privateKey: '', publicKey: '' });
-    setVrfResult(null);
-    setError(null);
-    setIsLoading(false);
-  }, []);
+    setStoreKeyPair({ privateKey: '', publicKey: '' });
+    setVRFResult(null);
+    setStoreError(null);
+    setGenerating(false);
+  }, [setStoreKeyPair, setVRFResult, setStoreError, setGenerating]);
 
   return {
     // State
@@ -136,6 +140,6 @@ export const useVRF = () => {
     reset,
     
     // Utilities
-    setKeyPair // Allow manual key pair setting
+    setKeyPair: setStoreKeyPair // Allow manual key pair setting
   };
 };
