@@ -92,6 +92,7 @@ export class LootService {
           proof: vrfResult.proof,
           message,
           blockhash,
+          index: vrfResult.index,
           vrfOutput: vrfResult.vrfOutput
         };
         

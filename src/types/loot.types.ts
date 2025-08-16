@@ -16,6 +16,7 @@ export interface VRFData {
   proof: Uint8Array | string;
   message: string;
   blockhash?: string;
+  index?: Uint8Array | string;
   vrfOutput?: Uint8Array | string;
 }
 
