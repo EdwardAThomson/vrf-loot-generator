@@ -106,7 +106,7 @@ export class VRFService {
 
       // VRF output: [k]H
       const vrfPoint = H.mul(privateKeyBN);
-      const vrf = vrfPoint.encode();
+      const vrf = vrfPoint.encode('array', false);
 
       // Prover chooses random r
       const rKeyPair = EC.genKeyPair();

@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import useInventoryStore from '../inventory.store';
+import useInventoryStore from '../inventory.store.ts';
 
 describe('useInventoryStore', () => {
   beforeEach(() => {

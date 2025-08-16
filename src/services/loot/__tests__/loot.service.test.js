@@ -1,5 +1,5 @@
-import { LootService } from '../loot.service';
-import { VRFService } from '../../vrf/vrf.service';
+import { LootService } from '../loot.service.ts';
+import { VRFService } from '../../vrf/vrf.service.ts';
 import { LOOT_CONSTANTS } from '../../../constants/loot.constants';
 
 describe('LootService', () => {

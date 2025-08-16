@@ -38,7 +38,7 @@ export const LootGenerator = () => {
   };
 
   const handleGenerateLoot = async () => {
-    if (!keyPair.privateKey || !blockhash) {
+    if (!keyPair?.privateKey || !blockhash) {
       return;
     }
 
@@ -56,7 +56,7 @@ export const LootGenerator = () => {
     }
   };
 
-  const canGenerateLoot = keyPair.privateKey && blockhash && !isLoading;
+  const canGenerateLoot = keyPair?.privateKey && blockhash && !isLoading;
   const rarityStats = getRarityStats();
 
   return (
@@ -84,7 +84,7 @@ export const LootGenerator = () => {
           <div>
             <h3 className="mb-3">Setup</h3>
             
-            {!keyPair.privateKey ? (
+            {!keyPair?.privateKey ? (
               <div className="mb-3">
                 <p className="text-muted mb-2">First, generate a key pair for VRF operations:</p>
                 <Button
@@ -163,7 +163,7 @@ export const LootGenerator = () => {
         {generatedItems.length > 0 && (
           <LootDisplay 
             items={generatedItems}
-            publicKey={keyPair.publicKey}
+            publicKey={keyPair?.publicKey || ''}
           />
         )}
       </Card>

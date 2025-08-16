@@ -1,4 +1,4 @@
-import { VRFService } from '../vrf.service';
+import { VRFService } from '../vrf.service.ts';
 
 describe('VRFService', () => {
   let keyPair;

@@ -8,7 +8,7 @@ const useVRFStore = create<VRFStore>()(
   devtools(
     (set, get) => ({
       // State
-      keyPair: null,
+      keyPair: { privateKey: '', publicKey: '' },
       vrfResults: [],
       isGenerating: false,
       error: null,

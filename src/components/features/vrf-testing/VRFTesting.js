@@ -33,7 +33,7 @@ export const VRFTesting = () => {
   };
 
   const handleComputeVRF = async () => {
-    if (!keyPair.privateKey || !message) {
+    if (!keyPair?.privateKey || !message) {
       return;
     }
 
@@ -45,11 +45,11 @@ export const VRFTesting = () => {
   };
 
   const handlePrivateKeyChange = (e) => {
-    setKeyPair(prev => ({ ...prev, privateKey: e.target.value }));
+    setKeyPair(prev => ({ ...prev || {}, privateKey: e.target.value }));
   };
 
   const handlePublicKeyChange = (e) => {
-    setKeyPair(prev => ({ ...prev, publicKey: e.target.value }));
+    setKeyPair(prev => ({ ...prev || {}, publicKey: e.target.value }));
   };
 
   return (
@@ -87,7 +87,7 @@ export const VRFTesting = () => {
 
             <Input
               label="Private Key"
-              value={keyPair.privateKey}
+              value={keyPair?.privateKey || ''}
               onChange={handlePrivateKeyChange}
               placeholder="Private key will appear here..."
               className="mb-2"
@@ -95,7 +95,7 @@ export const VRFTesting = () => {
 
             <Input
               label="Public Key"
-              value={keyPair.publicKey}
+              value={keyPair?.publicKey || ''}
               onChange={handlePublicKeyChange}
               placeholder="Public key will appear here..."
             />
@@ -115,7 +115,7 @@ export const VRFTesting = () => {
             <Button
               onClick={handleComputeVRF}
               loading={isLoading}
-              disabled={!keyPair.privateKey || !message || isLoading}
+              disabled={!keyPair?.privateKey || !message || isLoading}
             >
               Compute VRF
             </Button>
@@ -126,7 +126,7 @@ export const VRFTesting = () => {
         {vrfResult && (
           <VRFOutput 
             result={vrfResult}
-            publicKey={keyPair.publicKey}
+            publicKey={keyPair?.publicKey || ''}
           />
         )}
 
