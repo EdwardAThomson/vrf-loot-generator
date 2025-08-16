@@ -3,8 +3,8 @@
 
 import elliptic from 'elliptic';
 import BN from 'bn.js';
-import sha256 from 'js-sha256';
-import sha512 from 'js-sha512';
+import * as sha256 from 'js-sha256';
+import * as sha512 from 'js-sha512';
 import { VRFKeyPair, VRFResult } from '../../types/vrf.types';
 
 // Initialize elliptic curve using P256 (like original)
@@ -31,7 +31,7 @@ function H1(message: Uint8Array): elliptic.curve.base.BasePoint {
 
   while (x === null && i < 100) {
     // Hash the input + counter
-    const hash = sha512.array(new Uint8Array([...toBytesInt32(i), ...message]));
+    const hash = (sha512 as any).array(new Uint8Array([...toBytesInt32(i), ...message]));
     // Generate a point using the hash
     const pointData = [2, ...hash.slice(0, byteLen)];
     try {
@@ -57,7 +57,7 @@ function H2(data: Uint8Array): BN {
   let i = 0;
 
   while (true) {
-    const hash = sha512.array(new Uint8Array([...toBytesInt32(i), ...data]));
+    const hash = (sha512 as any).array(new Uint8Array([...toBytesInt32(i), ...data]));
     const k = new BN(hash.slice(0, byteLen));
     if (k.cmp(curve.n.sub(one)) === -1) {
       return k.add(one);
@@ -118,12 +118,12 @@ export class VRFService {
 
       // Compute the challenge s = H2(G, H, [k]G, VRF, [r]G, [r]H)
       const buffer = new Uint8Array([
-        ...curve.g.encode(),
-        ...H.encode(),
-        ...keyPair.getPublic().encode(),
+        ...curve.g.encode('array', false),
+        ...H.encode('array', false),
+        ...keyPair.getPublic().encode('array', false),
         ...vrf,
-        ...rG.encode(),
-        ...rH.encode(),
+        ...rG.encode('array', false),
+        ...rH.encode('array', false),
       ]);
 
       const s = H2(buffer);
@@ -132,7 +132,7 @@ export class VRFService {
       const t = r.sub(s.mul(privateKeyBN)).umod(curve.n);
 
       // Hash the VRF result to produce the index
-      const index = new Uint8Array(sha256.array(new Uint8Array(vrf)));
+      const index = new Uint8Array((sha256 as any).array(new Uint8Array(vrf)));
 
       // Construct the proof (s, t, VRF output)
       const proof = new Uint8Array([
@@ -193,12 +193,12 @@ export class VRFService {
 
       // Recompute the challenge: s' = H2(G, H, [k]G, VRF, [t]G + [s]([k]G), [t]H + [s]VRF)
       const buffer = new Uint8Array([
-        ...curve.g.encode(),
-        ...H.encode(),
-        ...keyPair.getPublic().encode(),
+        ...curve.g.encode('array', false),
+        ...H.encode('array', false),
+        ...keyPair.getPublic().encode('array', false),
         ...vrf,
-        ...tksG.encode(),
-        ...tksh.encode(),
+        ...tksG.encode('array', false),
+        ...tksh.encode('array', false),
       ]);
 
       const sPrime = H2(buffer);
@@ -209,7 +209,7 @@ export class VRFService {
       }
 
       // Return the hashed VRF result (index)
-      return new Uint8Array(sha256.array(new Uint8Array(vrf)));
+      return new Uint8Array((sha256 as any).array(new Uint8Array(vrf)));
     } catch (error) {
       throw new Error(`VRF verification failed: ${(error as Error).message}`);
     }

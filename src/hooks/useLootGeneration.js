@@ -1,8 +1,8 @@
 // Custom hook for loot generation
 import { useState, useCallback } from 'react';
-import { LootService } from '../services/loot/loot.service.js';
+import { LootService } from '../services/loot/loot.service.ts';
 import { LOOT_CONSTANTS } from '../constants/loot.constants.js';
-import { useInventoryStore } from '../store/index.js';
+import { useInventoryStore } from '../store/index.ts';
 
 /**
  * Custom hook for loot generation with error handling and loading states

@@ -2,9 +2,9 @@
 // Separates VRF logic from UI components
 
 import { useState, useCallback } from 'react';
-import { VRFService } from '../services/vrf/vrf.service.js';
+import { VRFService } from '../services/vrf/vrf.service.ts';
 import { toHexString, fromHexString } from '../utils/format.utils.js';
-import { useVRFStore } from '../store/index.js';
+import { useVRFStore } from '../store/index.ts';
 
 /**
  * Custom hook for VRF operations with loading states and error handling
