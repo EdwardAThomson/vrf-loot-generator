@@ -247,47 +247,68 @@ export const OnlineTradingDemo: React.FC = () => {
           <div className={styles.currentRoom}>
             <p>Current Room: <strong>{currentRoom.name}</strong></p>
             <p>Players: {currentRoom.players.length}/{currentRoom.maxPlayers}</p>
-            <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+            <div className={styles.roomPlayerList}>
               <strong>Room Players:</strong>
-              {currentRoom.players.map((player, index) => (
-                <div key={index}>
-                  {player.name} (ID: {player.id})
+              {currentRoom.players.map(player => (
+                <div key={player.id} className={styles.roomPlayerItem}>
+                  <span>
+                    {player.name}
+                    {player.name === playerName && ' (You)'}
+                  </span>
+                  {player.name !== playerName && (
+                    <button
+                      onClick={() => handleOpenTradeModal(player.id)}
+                      disabled={!canInitiateTrade || isTrading}
+                      className={styles.tradeButton}
+                    >
+                      Trade
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
-            <button onClick={leaveRoom}>Leave Room</button>
+            <button onClick={leaveRoom} className={styles.leaveButton}>Leave Room</button>
           </div>
         ) : (
           <div className={styles.roomControls}>
-            <input
-              type="text"
-              placeholder="Room name"
-              value={newRoomName}
-              onChange={(e) => setNewRoomName(e.target.value)}
-            />
-            <button onClick={handleCreateRoom}>Create Room</button>
+            <div className={styles.roomList}>
+              <h4>Available Rooms:</h4>
+              <button onClick={refreshRoomList}>Refresh</button>
+              {availableRooms.length === 0 ? (
+                <p>No rooms available</p>
+              ) : (
+                availableRooms.map((room: TradingRoom) => (
+                  <div key={room.id} className={styles.roomItem}>
+                    <span>{room.name} ({room.players.length}/{room.maxPlayers})</span>
+                    {room.players.some(p => p.id === currentPlayer?.id) ? (
+                      <span className={styles.currentRoomTag}>Current</span>
+                    ) : (
+                      <button 
+                        onClick={() => joinRoom(room.id)}
+                        disabled={currentRoom !== null || room.players.length >= room.maxPlayers}
+                      >
+                        Join
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className={styles.createRoom}>
+              <input
+                type="text"
+                value={newRoomName}
+                onChange={(e) => setNewRoomName(e.target.value)}
+                placeholder="Or create a new room..."
+                disabled={currentRoom !== null}
+              />
+              <button onClick={handleCreateRoom} disabled={currentRoom !== null || !newRoomName.trim()}>
+                Create Room
+              </button>
+            </div>
           </div>
         )}
-
-        <div className={styles.roomList}>
-          <h4>Available Rooms:</h4>
-          <button onClick={refreshRoomList}>Refresh</button>
-          {availableRooms.length === 0 ? (
-            <p>No rooms available</p>
-          ) : (
-            availableRooms.map(room => (
-              <div key={room.id} className={styles.roomItem}>
-                <span>{room.name} ({room.players.length}/{room.maxPlayers})</span>
-                <button 
-                  onClick={() => joinRoom(room.id)}
-                  disabled={room.players.length >= room.maxPlayers}
-                >
-                  Join
-                </button>
-              </div>
-            ))
-          )}
-        </div>
       </div>
 
       {/* Player List */}
@@ -318,12 +339,6 @@ export const OnlineTradingDemo: React.FC = () => {
               .map(player => (
                 <div key={player.id} className={styles.playerItem}>
                   <span>{player.name} (ID: {player.id})</span>
-                  <button 
-                    onClick={() => handleOpenTradeModal(player.id)}
-                    disabled={!canInitiateTrade || isTrading}
-                  >
-                    Trade
-                  </button>
                 </div>
               ))
             }

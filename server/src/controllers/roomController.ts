@@ -63,6 +63,11 @@ export class RoomController {
         return;
       }
 
+      // If player is already in the requested room, do nothing.
+      if (player.roomId === roomId) {
+        return;
+      }
+
       // Leave current room if in one
       if (player.roomId) {
         this.handleRoomLeave(socket);

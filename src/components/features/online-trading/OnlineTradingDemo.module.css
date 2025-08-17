@@ -99,14 +99,61 @@
   margin-bottom: 15px;
 }
 
-.currentRoom button {
-  padding: 6px 12px;
-  background: #6c757d;
+.leaveButton {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background: #dc3545;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.roomPlayerList {
   margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roomPlayerItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.tradeButton {
+  padding: 4px 10px;
+  font-size: 12px;
+  background-color: #ffc107; /* Golden color */
+  color: #212529; /* Dark text for contrast */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.tradeButton:hover:not(:disabled) {
+  background-color: #e0a800; /* Darker gold for hover */
+}
+
+.tradeButton:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.currentRoomTag {
+  font-weight: bold;
+  color: #0c5460;
+  background-color: #d1ecf1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .roomControls {
@@ -115,71 +162,87 @@
   gap: 20px;
 }
 
-.createRoom {
+.roomList {
   display: flex;
+  flex-direction: column;
   gap: 10px;
-  align-items: center;
 }
 
-.createRoom input {
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  flex: 1;
-  max-width: 200px;
+.roomList h4 {
+  margin: 0 0 5px 0;
 }
 
-.createRoom button {
-  padding: 8px 16px;
-  background: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.createRoom button:hover:not(:disabled) {
-  background: #218838;
-}
-
-.availableRooms h4 {
-  margin-bottom: 10px;
-}
-
-.availableRooms button {
-  padding: 6px 12px;
-  background: #17a2b8;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-bottom: 10px;
-}
-
-.availableRooms ul {
-  list-style: none;
-  padding: 0;
-}
-
-.availableRooms li {
+.roomItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  margin: 5px 0;
+  padding: 12px 15px;
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  transition: box-shadow 0.2s ease;
 }
 
-.availableRooms li button {
-  padding: 4px 8px;
+.roomItem:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.roomItem span {
+  font-weight: 500;
+}
+
+.roomItem button {
+  padding: 6px 14px;
   background: #007bff;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.roomItem button:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.roomItem button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.createRoom {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.createRoom input {
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  flex: 1;
+  font-size: 14px;
+}
+
+.createRoom button {
+  padding: 10px 18px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.createRoom button:hover:not(:disabled) {
+  background: #218838;
 }
 
 .playerList {
