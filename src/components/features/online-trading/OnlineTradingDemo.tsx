@@ -8,12 +8,24 @@ import { LootItem as LootItemComponent } from '../loot-generator/LootItem';
 import { socketService } from '../../../services/websocket/socket.service';
 import styles from './OnlineTradingDemo.module.css';
 
+interface RoomPlayer {
+  id: string;
+  name: string;
+}
+
+interface TradingRoom {
+  id: string;
+  name: string;
+  players: RoomPlayer[];
+  maxPlayers: number;
+}
+
 export const OnlineTradingDemo: React.FC = () => {
   const [newRoomName, setNewRoomName] = useState('');
   const [selectedItems, setSelectedItems] = useState<LootItem[]>([]);
-  const [onlinePlayers, setOnlinePlayers] = useState<any[]>([]);
-  const [availableRooms, setAvailableRooms] = useState<any[]>([]);
-  const [currentRoom, setCurrentRoom] = useState<any>(null);
+  const [onlinePlayers, setOnlinePlayers] = useState<RoomPlayer[]>([]);
+  const [availableRooms, setAvailableRooms] = useState<TradingRoom[]>([]);
+  const [currentRoom, setCurrentRoom] = useState<TradingRoom | null>(null);
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [tradeTargetPlayer, setTradeTargetPlayer] = useState<string | null>(null);
 
@@ -67,12 +79,17 @@ export const OnlineTradingDemo: React.FC = () => {
     if (!isConnected) return;
 
     // Player events
-    const handlePlayerList = (players: any[]) => {
+    const handlePlayerList = (players: RoomPlayer[]) => {
       setOnlinePlayers(players);
     };
 
-    const handlePlayerJoined = (player: any) => {
-      setOnlinePlayers(prev => [...prev, player]);
+    const handlePlayerJoined = (player: RoomPlayer) => {
+      setOnlinePlayers(prev => {
+        if (prev.find(p => p.id === player.id)) {
+          return prev;
+        }
+        return [...prev, player];
+      });
     };
 
     const handlePlayerLeft = (playerId: string) => {
@@ -80,11 +97,16 @@ export const OnlineTradingDemo: React.FC = () => {
     };
 
     // Room events
-    const handleRoomList = (rooms: any[]) => {
+    const handleRoomList = (rooms: TradingRoom[]) => {
       setAvailableRooms(rooms);
+      setCurrentRoom(prevRoom => {
+        if (!prevRoom) return null;
+        const updatedRoom = rooms.find(r => r.id === prevRoom.id);
+        return updatedRoom || null;
+      });
     };
 
-    const handleRoomJoined = (room: any) => {
+    const handleRoomJoined = (room: TradingRoom) => {
       setCurrentRoom(room);
     };
 
@@ -227,7 +249,7 @@ export const OnlineTradingDemo: React.FC = () => {
             <p>Players: {currentRoom.players.length}/{currentRoom.maxPlayers}</p>
             <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
               <strong>Room Players:</strong>
-              {currentRoom.players.map((player: any, index: number) => (
+              {currentRoom.players.map((player, index) => (
                 <div key={index}>
                   {player.name} (ID: {player.id})
                 </div>
@@ -275,7 +297,7 @@ export const OnlineTradingDemo: React.FC = () => {
         
         <div style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>
           <strong>All Online Players (Debug):</strong>
-          {onlinePlayers.map((player: any, index: number) => (
+          {onlinePlayers.map((player, index) => (
             <div key={index}>
               {player.name} (ID: {player.id}) {player.id === currentPlayer?.id || player.name === playerName ? '[YOU]' : ''}
             </div>

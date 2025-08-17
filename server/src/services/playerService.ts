@@ -2,8 +2,18 @@ import { v4 as uuidv4 } from 'uuid';
 import { Player, PlayerSession } from '../types/player.types';
 
 export class PlayerService {
+  private static instance: PlayerService;
   private players: Map<string, Player> = new Map();
   private sessions: Map<string, PlayerSession> = new Map(); // socketId -> session
+
+  private constructor() {}
+
+  public static getInstance(): PlayerService {
+    if (!PlayerService.instance) {
+      PlayerService.instance = new PlayerService();
+    }
+    return PlayerService.instance;
+  }
 
   createPlayer(name: string, socketId: string): Player {
     const player: Player = {

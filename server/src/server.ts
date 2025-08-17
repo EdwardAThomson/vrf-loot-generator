@@ -48,17 +48,15 @@ const io = new Server<
 });
 
 // Initialize services
-const playerService = new PlayerService();
-const roomService = new RoomService();
+const playerService = PlayerService.getInstance();
+const roomService = RoomService.getInstance();
 
 // Initialize controllers
-const playerController = new PlayerController(playerService, roomService);
-const roomController = new RoomController(playerService, roomService);
-const tradingController = new TradingController(playerService, roomService);
+const playerController = new PlayerController(io, playerService, roomService);
+const roomController = new RoomController(io, playerService, roomService);
+const tradingController = new TradingController(io, playerService, roomService);
 
-// Create a default public room
-const defaultRoom = roomService.createRoom('General Trading', 'system', false, 50);
-console.log(`Created default room: ${defaultRoom.name} (${defaultRoom.id})`);
+// Default room is created within the RoomService constructor.
 
 // Socket connection handling
 io.on('connection', (socket) => {
@@ -157,7 +155,7 @@ server.listen(PORT, () => {
   console.log(`🚀 VRF Loot Trading Server running on port ${PORT}`);
   console.log(`📡 WebSocket endpoint: ws://localhost:${PORT}`);
   console.log(`🌐 CORS origin: ${corsOptions.origin}`);
-  console.log(`🏠 Default room created: ${defaultRoom.name}`);
+  // console.log(`🏠 Default room created: ${defaultRoom.name}`);
 });
 
 // Graceful shutdown

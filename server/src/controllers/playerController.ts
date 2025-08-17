@@ -1,13 +1,18 @@
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { PlayerService } from '../services/playerService';
 import { RoomService } from '../services/roomService';
-import { ServerToClientEvents, ClientToServerEvents, SocketData } from '../types/socket.types';
+import { ServerToClientEvents, ClientToServerEvents, SocketData, InterServerEvents } from '../types/socket.types';
 
 export class PlayerController {
+  private io: Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
+
   constructor(
+    io: Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>,
     private playerService: PlayerService,
     private roomService: RoomService
-  ) {}
+  ) {
+    this.io = io;
+  }
 
   handlePlayerJoin = (
     socket: Socket<ClientToServerEvents, ServerToClientEvents, {}, SocketData>,

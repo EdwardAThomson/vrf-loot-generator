@@ -1,13 +1,22 @@
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { PlayerService } from '../services/playerService';
 import { RoomService } from '../services/roomService';
-import { ServerToClientEvents, ClientToServerEvents, SocketData } from '../types/socket.types';
+import { ServerToClientEvents, ClientToServerEvents, SocketData, InterServerEvents } from '../types/socket.types';
 
 export class RoomController {
+  private io: Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
+
   constructor(
+    io: Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>,
     private playerService: PlayerService,
     private roomService: RoomService
-  ) {}
+  ) {
+    this.io = io;
+  }
+
+  private broadcastRoomList = () => {
+    this.io.emit('room:list', this.roomService.getPublicRooms());
+  };
 
   handleRoomCreate = (
     socket: Socket<ClientToServerEvents, ServerToClientEvents, {}, SocketData>,
@@ -25,8 +34,9 @@ export class RoomController {
       
       console.log(`Room ${room.name} (${room.id}) created by ${socket.data.playerName}`);
       
-      // Auto-join the creator to the room
+      // Auto-join the creator to the room and broadcast update
       this.handleRoomJoin(socket, room.id);
+      this.broadcastRoomList();
 
     } catch (error) {
       console.error('Error creating room:', error);
@@ -80,6 +90,9 @@ export class RoomController {
 
       console.log(`Player ${player.name} joined room ${room.name}`);
 
+      // Broadcast updated room list to everyone
+      this.broadcastRoomList();
+
     } catch (error) {
       console.error('Error joining room:', error);
       socket.emit('error', 'Failed to join room');
@@ -131,6 +144,9 @@ export class RoomController {
       socket.emit('room:left', roomId);
 
       console.log(`Player ${player.name} left room ${roomId}`);
+
+      // Broadcast updated room list to everyone
+      this.broadcastRoomList();
 
     } catch (error) {
       console.error('Error leaving room:', error);

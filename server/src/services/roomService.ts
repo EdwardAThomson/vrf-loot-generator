@@ -3,8 +3,23 @@ import { TradingRoom, TradeSession } from '../types/trading.types';
 import { Player } from '../types/player.types';
 
 export class RoomService {
+  private static instance: RoomService;
   private rooms: Map<string, TradingRoom> = new Map();
   private activeTrades: Map<string, TradeSession> = new Map();
+  private generalRoomId: string;
+
+  private constructor() {
+    const generalRoom = this.createRoom('General Trading', 'System', false, 50);
+    this.generalRoomId = generalRoom.id;
+    console.log(`Created default room: ${generalRoom.name} (${generalRoom.id})`);
+  }
+
+  public static getInstance(): RoomService {
+    if (!RoomService.instance) {
+      RoomService.instance = new RoomService();
+    }
+    return RoomService.instance;
+  }
 
   createRoom(name: string, createdBy: string, isPrivate: boolean = false, maxPlayers: number = 10): TradingRoom {
     const room: TradingRoom = {
@@ -57,8 +72,8 @@ export class RoomService {
 
     room.players.splice(playerIndex, 1);
 
-    // Remove empty rooms (except if they have active trades)
-    if (room.players.length === 0 && room.activeTrades.length === 0) {
+    // Remove empty rooms (except if they have active trades or are the general room)
+    if (room.players.length === 0 && room.activeTrades.length === 0 && roomId !== this.generalRoomId) {
       this.rooms.delete(roomId);
     }
 
