@@ -19,6 +19,8 @@
 .env.production.local
 
 temp/
+server/node_modules
+server/dist/
 
 npm-debug.log*
 yarn-debug.log*

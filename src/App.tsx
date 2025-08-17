@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { VRFTesting } from './components/features/vrf-testing/VRFTesting';
 import { LootGenerator } from './components/features/loot-generator/LootGenerator';
 import { TradingSystem } from './components/features/trading/TradingSystem';
+import { OnlineTradingDemo } from './components/features/online-trading/OnlineTradingDemo';
+import { PlayerSession } from './components/layout/PlayerSession';
 import './styles/globals.css';
 
 interface Tab {
@@ -20,7 +22,7 @@ function App() {
   const tabs: Tab[] = [
     { id: 'vrf', label: 'VRF Testing', component: VRFTesting },
     { id: 'loot', label: 'Loot Generator', component: LootGenerator },
-    { id: 'trading', label: 'Trading System', component: TradingSystem }
+    { id: 'trading', label: 'Trading System', component: OnlineTradingDemo }
   ];
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || VRFTesting;
@@ -45,6 +47,7 @@ function App() {
       </nav>
 
       <main className="app-main">
+        <PlayerSession />
         <ActiveComponent />
       </main>
     </div>
