@@ -1,26 +1,33 @@
 // VRF Verification Component
-import React, { useState } from 'react';
-import { useVRF } from '../../../hooks/useVRF.js';
-import { Button } from '../../ui/Button/Button.js';
-import { Input } from '../../ui/Input/Input.js';
+import React, { useState, ChangeEvent } from 'react';
+import { useVRF } from '../../../hooks/useVRF';
+import { Button } from '../../ui/Button/Button';
+import { Input } from '../../ui/Input/Input';
 import styles from './VRFVerification.module.css';
+
+interface VerificationData {
+  publicKey: string;
+  proof: string;
+  message: string;
+  vrfOutput: string;
+}
 
 /**
  * Component for verifying VRF proofs
  */
-export const VRFVerification = () => {
-  const { verifyVRF, isLoading, error } = useVRF();
+export const VRFVerification: React.FC = () => {
+  const { verifyVRF, isLoading } = useVRF();
   
-  const [verificationData, setVerificationData] = useState({
+  const [verificationData, setVerificationData] = useState<VerificationData>({
     publicKey: '',
     proof: '',
     message: '',
     vrfOutput: ''
   });
   
-  const [verificationResult, setVerificationResult] = useState(null);
+  const [verificationResult, setVerificationResult] = useState<boolean | null>(null);
 
-  const handleInputChange = (field) => (e) => {
+  const handleInputChange = (field: keyof VerificationData) => (e: ChangeEvent<HTMLInputElement>) => {
     setVerificationData(prev => ({
       ...prev,
       [field]: e.target.value
@@ -29,7 +36,7 @@ export const VRFVerification = () => {
     setVerificationResult(null);
   };
 
-  const handleVerify = async () => {
+  const handleVerify = async (): Promise<void> => {
     const { publicKey, proof, message, vrfOutput } = verificationData;
     
     if (!publicKey || !proof || !message || !vrfOutput) {

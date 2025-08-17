@@ -1,16 +1,22 @@
 // Loot Display Component
-import React, { useState } from 'react';
-import { Button } from '../../ui/Button/Button.js';
-import { LootItem } from './LootItem.js';
-import { LOOT_CONSTANTS } from '../../../constants/loot.constants.js';
+import React, { useState, ChangeEvent } from 'react';
+import { Button } from '../../ui/Button/Button';
+import { LootItem } from './LootItem';
+import { LOOT_CONSTANTS } from '../../../constants/loot.constants';
+import { LootItem as LootItemType } from '../../../types/loot.types';
 import styles from './LootDisplay.module.css';
+
+interface LootDisplayProps {
+  items: LootItemType[];
+  publicKey: string;
+}
 
 /**
  * Component to display generated loot items with filtering
  */
-export const LootDisplay = ({ items, publicKey }) => {
-  const [selectedRarity, setSelectedRarity] = useState('all');
-  const [sortBy, setSortBy] = useState('created');
+export const LootDisplay: React.FC<LootDisplayProps> = ({ items, publicKey }) => {
+  const [selectedRarity, setSelectedRarity] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('created');
 
   // Filter items by rarity
   const filteredItems = selectedRarity === 'all' 
@@ -29,15 +35,15 @@ export const LootDisplay = ({ items, publicKey }) => {
         return a.name.localeCompare(b.name);
       case 'created':
       default:
-        return (a.createdAt || 0) - (b.createdAt || 0);
+        return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
     }
   });
 
   // Get rarity counts for filter buttons
-  const rarityCounts = Object.values(LOOT_CONSTANTS.RARITIES).reduce((acc, rarity) => {
+  const rarityCounts: Record<string, number> = Object.values(LOOT_CONSTANTS.RARITIES).reduce((acc, rarity) => {
     acc[rarity] = items.filter(item => item.rarity === rarity).length;
     return acc;
-  }, {});
+  }, {} as Record<string, number>);
 
   return (
     <div className={`${styles.lootDisplay} mt-4`}>
@@ -76,7 +82,7 @@ export const LootDisplay = ({ items, publicKey }) => {
             <select 
               className={`form-input ${styles.sortSelect}`}
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value)}
             >
               <option value="created">Creation Order</option>
               <option value="rarity">Rarity</option>
@@ -95,6 +101,7 @@ export const LootDisplay = ({ items, publicKey }) => {
             item={item}
             publicKey={publicKey}
             showVerification={true}
+            onSelect={() => {}}
           />
         ))}
       </div>

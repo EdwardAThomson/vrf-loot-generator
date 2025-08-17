@@ -1,14 +1,19 @@
 // Loot Statistics Component
 import React from 'react';
-import { LOOT_CONSTANTS } from '../../../constants/loot.constants.js';
+import { LOOT_CONSTANTS } from '../../../constants/loot.constants';
 import styles from './LootStats.module.css';
+
+interface LootStatsProps {
+  stats: Record<string, number>;
+  totalItems: number;
+}
 
 /**
  * Component to display loot generation statistics
  */
-export const LootStats = ({ stats, totalItems }) => {
-  const getRarityColor = (rarity) => {
-    const colors = {
+export const LootStats: React.FC<LootStatsProps> = ({ stats, totalItems }) => {
+  const getRarityColor = (rarity: string): string => {
+    const colors: Record<string, string> = {
       'Common': 'var(--rarity-common)',
       'Rare': 'var(--rarity-rare)',
       'Epic': 'var(--rarity-epic)',
@@ -17,8 +22,8 @@ export const LootStats = ({ stats, totalItems }) => {
     return colors[rarity] || 'var(--rarity-common)';
   };
 
-  const getPercentage = (count) => {
-    return totalItems > 0 ? ((count / totalItems) * 100).toFixed(1) : 0;
+  const getPercentage = (count: number): string => {
+    return totalItems > 0 ? ((count / totalItems) * 100).toFixed(1) : '0';
   };
 
   return (

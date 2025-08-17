@@ -1,11 +1,17 @@
 // Reusable Card Component
-import React from 'react';
+import React, { HTMLAttributes, ReactNode } from 'react';
 import './Card.module.css';
+
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
+  title?: string;
+  description?: string;
+}
 
 /**
  * Reusable card component for consistent layout
  */
-export const Card = ({
+export const Card: React.FC<CardProps> = ({
   children,
   title,
   description,

@@ -1,4 +1,4 @@
-// Import for combined hook
+// Import for use in combined hook
 import useInventoryStore from './inventory.store';
 import useTradingStore from './trading.store';
 import useVRFStore from './vrf.store';
@@ -11,9 +11,16 @@ export { default as useVRFStore } from './vrf.store';
 export { default as usePlayersStore } from './players.store';
 
 // Combined store hook for components that need multiple stores
-export const useStores = () => ({
-  inventory: useInventoryStore(),
-  trading: useTradingStore(),
-  vrf: useVRFStore(),
-  players: usePlayersStore()
-});
+export const useStores = () => {
+  const inventory = useInventoryStore();
+  const trading = useTradingStore();
+  const vrf = useVRFStore();
+  const players = usePlayersStore();
+  
+  return {
+    inventory,
+    trading,
+    vrf,
+    players
+  };
+};

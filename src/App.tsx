@@ -1,17 +1,23 @@
 // Main App Component - Clean Architecture
 import React, { useState } from 'react';
-import { VRFTesting } from './components/features/vrf-testing/VRFTesting.js';
-import { LootGenerator } from './components/features/loot-generator/LootGenerator.js';
-import { TradingSystem } from './components/features/trading/TradingSystem.js';
+import { VRFTesting } from './components/features/vrf-testing/VRFTesting';
+import { LootGenerator } from './components/features/loot-generator/LootGenerator';
+import { TradingSystem } from './components/features/trading/TradingSystem';
 import './styles/globals.css';
+
+interface Tab {
+  id: string;
+  label: string;
+  component: React.ComponentType;
+}
 
 /**
  * Main application component with tab navigation
  */
 function App() {
-  const [activeTab, setActiveTab] = useState('vrf');
+  const [activeTab, setActiveTab] = useState<string>('vrf');
 
-  const tabs = [
+  const tabs: Tab[] = [
     { id: 'vrf', label: 'VRF Testing', component: VRFTesting },
     { id: 'loot', label: 'Loot Generator', component: LootGenerator },
     { id: 'trading', label: 'Trading System', component: TradingSystem }

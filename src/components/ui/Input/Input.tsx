@@ -1,11 +1,16 @@
 // Reusable Input Component
-import React from 'react';
+import React, { InputHTMLAttributes } from 'react';
 import './Input.module.css';
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string | null;
+}
 
 /**
  * Reusable input component with label and error handling
  */
-export const Input = ({
+export const Input: React.FC<InputProps> = ({
   label,
   value,
   onChange,

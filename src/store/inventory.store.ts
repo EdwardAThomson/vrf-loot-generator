@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { InventoryStoreState, InventoryStoreActions, LootItem, LootStats } from '../types/loot.types';
+import { InventoryStoreState, InventoryStoreActions, LootItem } from '../types/loot.types';
 
 type InventoryStore = InventoryStoreState & InventoryStoreActions;
 
@@ -14,8 +14,7 @@ const useInventoryStore = create<InventoryStore>()(
       
       // Actions
       addItem: (item: Omit<LootItem, 'id'>) => set((state) => {
-        const newItem: LootItem = { ...item, id: Date.now() + Math.random().toString() };
-        const newItems = [...state.items, newItem];
+        const newItems = [...state.items, { ...item, id: (Date.now() + Math.random()).toString() }];
         return {
           items: newItems,
           totalItems: newItems.length
@@ -23,9 +22,9 @@ const useInventoryStore = create<InventoryStore>()(
       }),
       
       addItems: (items: Omit<LootItem, 'id'>[]) => set((state) => {
-        const itemsWithIds: LootItem[] = items.map(item => ({ 
+        const itemsWithIds = items.map(item => ({ 
           ...item, 
-          id: Date.now() + Math.random().toString() + Math.random().toString()
+          id: (Date.now() + Math.random() + Math.random()).toString() 
         }));
         const newItems = [...state.items, ...itemsWithIds];
         return {
@@ -68,9 +67,9 @@ const useInventoryStore = create<InventoryStore>()(
         return items.filter(item => item.rarity === rarity);
       },
       
-      getItemStats: (): LootStats => {
+      getItemStats: () => {
         const { items } = get();
-        const stats = items.reduce((acc, item) => {
+        const stats: Record<string, number> = items.reduce((acc, item) => {
           acc[item.rarity] = (acc[item.rarity] || 0) + 1;
           return acc;
         }, {} as Record<string, number>);
@@ -79,7 +78,7 @@ const useInventoryStore = create<InventoryStore>()(
           total: items.length,
           byRarity: stats,
           rarityPercentages: Object.entries(stats).reduce((acc, [rarity, count]) => {
-            acc[rarity] = ((count / items.length) * 100).toFixed(1);
+            acc[rarity] = ((count as number / items.length) * 100).toFixed(1);
             return acc;
           }, {} as Record<string, string>)
         };

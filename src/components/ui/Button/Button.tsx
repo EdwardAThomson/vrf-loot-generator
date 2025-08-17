@@ -1,11 +1,18 @@
 // Reusable Button Component
-import React from 'react';
+import React, { ButtonHTMLAttributes, ReactNode } from 'react';
 import './Button.module.css';
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  children: ReactNode;
+  variant?: 'primary' | 'secondary' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
+}
 
 /**
  * Reusable button component with consistent styling
  */
-export const Button = ({
+export const Button: React.FC<ButtonProps> = ({
   children,
   variant = 'primary',
   size = 'md',

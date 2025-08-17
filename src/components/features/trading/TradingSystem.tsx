@@ -1,12 +1,12 @@
 // Trading System Component - Placeholder for Phase 3
 import React from 'react';
-import { Card } from '../../ui/Card/Card.js';
+import { Card } from '../../ui/Card/Card';
 import styles from './TradingSystem.module.css';
 
 /**
  * Trading System tab component - will be implemented in Phase 3
  */
-export const TradingSystem = () => {
+export const TradingSystem: React.FC = () => {
   return (
     <div className="trading-system">
       <Card

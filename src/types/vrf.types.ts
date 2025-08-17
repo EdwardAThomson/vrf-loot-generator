@@ -1,8 +1,8 @@
-// VRF-related type definitions
+// VRF Type definitions
 
 export interface VRFKeyPair {
-  publicKey: string;
   privateKey: string;
+  publicKey: string;
 }
 
 export interface VRFResult {
@@ -13,17 +13,23 @@ export interface VRFResult {
 
 export interface VRFFormattedResult {
   vrfOutput: string;
-  proof: string;
+  proof: VRFProof;
   index: string;
   message: string;
-  messageHex: string;
+  publicKey: string;
 }
 
-export interface VRFData {
+export interface VRFProof {
+  gamma: string;
+  c: string;
+  s: string;
+}
+
+export interface VRFVerificationParams {
   publicKey: string;
-  proof: Uint8Array | string;
-  message: string;
-  vrfOutput?: Uint8Array | string;
+  proof: VRFProof | string;
+  message: Uint8Array;
+  vrfOutput: string;
 }
 
 export interface VRFStoreState {

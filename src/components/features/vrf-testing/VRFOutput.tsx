@@ -1,15 +1,21 @@
 // VRF Output Display Component
 import React, { useState } from 'react';
-import { Button } from '../../ui/Button/Button.js';
+import { Button } from '../../ui/Button/Button';
+import { VRFFormattedResult } from '../../../types/vrf.types';
 import styles from './VRFOutput.module.css';
+
+interface VRFOutputProps {
+  result: VRFFormattedResult;
+  publicKey: string;
+}
 
 /**
  * Component to display VRF computation results
  */
-export const VRFOutput = ({ result, publicKey }) => {
-  const [copiedField, setCopiedField] = useState(null);
+export const VRFOutput: React.FC<VRFOutputProps> = ({ result, publicKey }) => {
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const copyToClipboard = async (text, fieldName) => {
+  const copyToClipboard = async (text: string, fieldName: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedField(fieldName);
@@ -19,8 +25,10 @@ export const VRFOutput = ({ result, publicKey }) => {
     }
   };
 
-  const formatProof = (proof) => {
-    // Proof is now a hex string, so just return it
+  const formatProof = (proof: any): string => {
+    if (typeof proof === 'object' && proof !== null) {
+      return `${proof.gamma || ''}-${proof.c || ''}-${proof.s || ''}`;
+    }
     return proof || 'No proof available';
   };
 
@@ -45,20 +53,6 @@ export const VRFOutput = ({ result, publicKey }) => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Message (Hex)</label>
-            <div className={styles.outputField}>
-              <code className={styles.outputText}>{result.messageHex}</code>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => copyToClipboard(result.messageHex, 'messageHex')}
-              >
-                {copiedField === 'messageHex' ? 'Copied!' : 'Copy'}
-              </Button>
-            </div>
-          </div>
-
-          <div className="form-group">
             <label className="form-label">VRF Output</label>
             <div className={styles.outputField}>
               <code className={styles.outputText}>{result.vrfOutput}</code>
@@ -77,11 +71,11 @@ export const VRFOutput = ({ result, publicKey }) => {
           <div className="form-group">
             <label className="form-label">VRF Proof</label>
             <div className={styles.outputField}>
-              <code className={`${styles.outputText} ${styles.proofText}`}>{result.proof}</code>
+              <code className={`${styles.outputText} ${styles.proofText}`}>{formatProof(result.proof)}</code>
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => copyToClipboard(result.proof, 'proof')}
+                onClick={() => copyToClipboard(formatProof(result.proof), 'proof')}
               >
                 {copiedField === 'proof' ? 'Copied!' : 'Copy'}
               </Button>

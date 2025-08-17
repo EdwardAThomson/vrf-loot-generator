@@ -1,18 +1,18 @@
 // Loot Generator Component - Clean separation of concerns
-import React, { useState } from 'react';
-import { useVRF } from '../../../hooks/useVRF.js';
-import { useLootGeneration } from '../../../hooks/useLootGeneration.js';
-import { Card } from '../../ui/Card/Card.js';
-import { Button } from '../../ui/Button/Button.js';
-import { Input } from '../../ui/Input/Input.js';
-import { LootDisplay } from './LootDisplay.js';
-import { LootStats } from './LootStats.js';
-import { LOOT_CONSTANTS } from '../../../constants/loot.constants.js';
+import React, { useState, ChangeEvent } from 'react';
+import { useVRF } from '../../../hooks/useVRF';
+import { useLootGeneration } from '../../../hooks/useLootGeneration';
+import { Card } from '../../ui/Card/Card';
+import { Button } from '../../ui/Button/Button';
+import { Input } from '../../ui/Input/Input';
+import { LootDisplay } from './LootDisplay';
+import { LootStats } from './LootStats';
+import { LOOT_CONSTANTS } from '../../../constants/loot.constants';
 
 /**
  * Loot Generator tab component - pure UI logic
  */
-export const LootGenerator = () => {
+export const LootGenerator: React.FC = () => {
   const { keyPair, generateKeyPair, isLoading: vrfLoading } = useVRF();
   const { 
     generatedItems, 
@@ -49,7 +49,7 @@ export const LootGenerator = () => {
     }
   };
 
-  const handleItemCountChange = (e) => {
+  const handleItemCountChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     if (value >= LOOT_CONSTANTS.LIMITS.MIN_ITEMS && value <= LOOT_CONSTANTS.LIMITS.MAX_ITEMS) {
       setItemCount(value);
@@ -113,7 +113,7 @@ export const LootGenerator = () => {
             <Input
               label="Blockhash"
               value={blockhash}
-              onChange={(e) => setBlockhash(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setBlockhash(e.target.value)}
               placeholder="Enter blockhash or any string..."
               className="mb-3"
             />

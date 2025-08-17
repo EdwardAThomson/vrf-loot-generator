@@ -1,16 +1,17 @@
 // VRF Testing Component - Clean separation of concerns
-import React, { useState } from 'react';
-import { useVRF } from '../../../hooks/useVRF.js';
-import { Card } from '../../ui/Card/Card.js';
-import { Button } from '../../ui/Button/Button.js';
-import { Input } from '../../ui/Input/Input.js';
-import { VRFOutput } from './VRFOutput.js';
-import { VRFVerification } from './VRFVerification.js';
+import React, { useState, ChangeEvent } from 'react';
+import { useVRF } from '../../../hooks/useVRF';
+import { Card } from '../../ui/Card/Card';
+import { Button } from '../../ui/Button/Button';
+import { Input } from '../../ui/Input/Input';
+import { VRFOutput } from './VRFOutput';
+import { VRFVerification } from './VRFVerification';
+import { VRFKeyPair } from '../../../types/vrf.types';
 
 /**
  * VRF Testing tab component - pure UI logic
  */
-export const VRFTesting = () => {
+export const VRFTesting: React.FC = () => {
   const {
     keyPair,
     vrfResult,
@@ -22,9 +23,9 @@ export const VRFTesting = () => {
     setKeyPair
   } = useVRF();
 
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState<string>('');
 
-  const handleGenerateKeys = async () => {
+  const handleGenerateKeys = async (): Promise<void> => {
     try {
       await generateKeyPair();
     } catch (err) {
@@ -32,7 +33,7 @@ export const VRFTesting = () => {
     }
   };
 
-  const handleComputeVRF = async () => {
+  const handleComputeVRF = async (): Promise<void> => {
     if (!keyPair?.privateKey || !message) {
       return;
     }
@@ -44,12 +45,20 @@ export const VRFTesting = () => {
     }
   };
 
-  const handlePrivateKeyChange = (e) => {
-    setKeyPair(prev => ({ ...prev || {}, privateKey: e.target.value }));
+  const handlePrivateKeyChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    const newKeyPair: VRFKeyPair = { 
+      ...keyPair || { privateKey: '', publicKey: '' }, 
+      privateKey: e.target.value 
+    };
+    setKeyPair(newKeyPair);
   };
 
-  const handlePublicKeyChange = (e) => {
-    setKeyPair(prev => ({ ...prev || {}, publicKey: e.target.value }));
+  const handlePublicKeyChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    const newKeyPair: VRFKeyPair = { 
+      ...keyPair || { privateKey: '', publicKey: '' }, 
+      publicKey: e.target.value 
+    };
+    setKeyPair(newKeyPair);
   };
 
   return (
@@ -107,7 +116,7 @@ export const VRFTesting = () => {
             <Input
               label="Message"
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setMessage(e.target.value)}
               placeholder="Enter message to compute VRF..."
               className="mb-3"
             />
