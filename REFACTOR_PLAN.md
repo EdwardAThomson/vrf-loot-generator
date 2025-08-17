@@ -23,10 +23,16 @@ Rewrite the VRF loot generation and trading system with clean architecture princ
   - **Type Safety**: All linting errors resolved, only minor ESLint warnings remain
   - **Import Resolution**: All import paths fixed, CSS modules working
 
+* __✅ Completed (Phase 2.5 - Testing Infrastructure)__
+  - **Jest + TypeScript Setup**: @types/jest installed, TypeScript test configuration working
+  - **Loot Service Tests**: Core loot generation logic fully tested with mocked VRF dependencies
+  - **Hook Testing**: useVRF hook tests implemented with React Testing Library
+  - **Test Environment**: TextEncoder polyfills and Jest setup files configured
+
 * __❌ Pending (High Priority)__
-  - **Testing Infrastructure**: Jest + RTL setup for services and components
   - **Trading System Refactor**: Enhanced Zustand stores and commit-reveal protocol
   - **Error Handling**: Replace remaining alert() calls with proper UI feedback
+  - **VRF Service Tests**: Full VRF crypto tests (blocked by Jest/crypto library compatibility)
 
 * __❌ Not Started (Future Phases)__
   - **WebSocket Backend**: Node.js server for cross-browser communication
@@ -34,16 +40,16 @@ Rewrite the VRF loot generation and trading system with clean architecture princ
   - **Performance Optimization**: Code splitting, lazy loading
 
 ### Immediate Next Steps (Priority Order)
-1. **Add Basic Testing** - Jest setup for core services (VRF, loot generation)
-2. **Enhanced Trading System** - Improve trading components and state management
-3. **Error Handling Improvements** - Replace alerts with proper error UI components
-4. **WebSocket Backend** - Begin Phase 3 implementation
+1. **Enhanced Trading System** - Improve trading components and state management
+2. **Error Handling Improvements** - Replace alerts with proper error UI components
+3. **WebSocket Backend** - Begin Phase 3 implementation
+4. **VRF Service Testing** - Resolve Jest/crypto compatibility issues for full test coverage
 
 ### Remaining Issues to Address
-1. **No testing** - Core services lack unit tests
-2. **Trading system** - Needs enhanced functionality and better UX
-3. **Error handling** - Some alert() calls still present
-4. **WebSocket backend** - Cross-browser communication not implemented
+1. **Trading system** - Needs enhanced functionality and better UX
+2. **Error handling** - Some alert() calls still present
+3. **WebSocket backend** - Cross-browser communication not implemented
+4. **VRF crypto testing** - Jest compatibility issues with elliptic/crypto libraries
 5. **Performance** - Could benefit from code splitting and optimization
 
 ## New Architecture

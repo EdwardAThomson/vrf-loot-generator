@@ -1,9 +1,10 @@
-import { VRFService } from '../vrf.service.ts';
+import { VRFService } from '../vrf.service';
+import { VRFKeyPair, VRFResult } from '../../../types/vrf.types';
 
 describe('VRFService', () => {
-  let keyPair;
-  let testMessage;
-  let testMessageBuffer;
+  let keyPair: VRFKeyPair;
+  let testMessage: string;
+  let testMessageBuffer: Uint8Array;
 
   beforeEach(() => {
     keyPair = VRFService.generateKeyPair();
