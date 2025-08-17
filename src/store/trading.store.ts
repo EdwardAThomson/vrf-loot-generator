@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { TradingStoreState, TradingStoreActions, TradeRequest, Player, TradePhase } from '../types/trading.types';
 import { LootItem } from '../types/loot.types';
+import { TradingService } from '../services/trading/trading.service';
+import { CommitRevealService, TradeCommitment, Commitment, Reveal } from '../services/trading/commit-reveal.service';
 
 type TradingStore = TradingStoreState & TradingStoreActions;
 
@@ -20,6 +22,10 @@ const useTradingStore = create<TradingStore>()(
       reveal: null,
       partnerCommitment: null,
       partnerReveal: null,
+      tradeSessionId: null,
+      tradeCommitment: null,
+      validationErrors: [],
+      fairnessAssessment: null,
       
       // Actions
       setPlayerId: (id: string) => set({ playerId: id }),
@@ -27,22 +33,32 @@ const useTradingStore = create<TradingStore>()(
       
       updateConnectedPlayers: (players: Player[]) => set({ connectedPlayers: players }),
       
-      initiateTradeWith: (targetPlayerId: string, targetPlayerName: string, offeredItems: LootItem[]) => set((state) => {
-        const newTrade: TradeRequest = {
-          id: Date.now(),
-          initiator: state.playerId || '',
-          target: targetPlayerId,
-          targetName: targetPlayerName,
+      initiateTradeWith: (targetPlayerId: string, targetPlayerName: string, offeredItems: LootItem[], initiatorPublicKey: string) => set((state) => {
+        // Validate trade request using service
+        const tradeResult = TradingService.createTradeRequest(
+          state.playerId || '',
+          state.playerName,
+          targetPlayerId,
+          targetPlayerName,
           offeredItems,
-          requestedItems: [],
-          status: 'pending',
-          createdAt: new Date().toISOString()
-        };
+          initiatorPublicKey
+        );
+        
+        if (!tradeResult) {
+          return {
+            ...state,
+            validationErrors: ['Failed to create trade request - items validation failed']
+          };
+        }
+        
+        const sessionId = TradingService.createTradeSession(state.playerId || '', targetPlayerId);
         
         return {
-          currentTrade: newTrade,
+          currentTrade: tradeResult.tradeRequest,
           tradePhase: 'requesting' as TradePhase,
-          isTradeActive: true
+          isTradeActive: true,
+          tradeSessionId: sessionId,
+          validationErrors: tradeResult.errors
         };
       }),
       
@@ -66,17 +82,34 @@ const useTradingStore = create<TradingStore>()(
         tradeRequests: state.tradeRequests.filter(req => req.id !== tradeId)
       })),
       
-      updateTradeOffer: (offeredItems: LootItem[], requestedItems: LootItem[]) => set((state) => ({
-        currentTrade: state.currentTrade ? {
-          ...state.currentTrade,
-          offeredItems,
-          requestedItems
-        } : null
-      })),
+      updateTradeOffer: (offeredItems: LootItem[], requestedItems: LootItem[]) => set((state) => {
+        if (!state.currentTrade) return state;
+        
+        // Assess trade fairness
+        const fairness = TradingService.assessTradeFairness(offeredItems, requestedItems);
+        
+        return {
+          currentTrade: {
+            ...state.currentTrade,
+            offeredItems,
+            requestedItems
+          },
+          fairnessAssessment: fairness
+        };
+      }),
       
-      commitToTrade: (commitment: string) => set({
-        commitment,
-        tradePhase: 'committing' as TradePhase
+      commitToTrade: (offeredItems: LootItem[]) => set((state) => {
+        if (!state.playerId) return state;
+        
+        // Create cryptographic commitment using service
+        const tradeCommitment = CommitRevealService.createTradeCommitment(state.playerId, offeredItems);
+        const publicCommitment = CommitRevealService.getPublicCommitment(tradeCommitment);
+        
+        return {
+          tradeCommitment,
+          commitment: JSON.stringify(publicCommitment.commitment),
+          tradePhase: 'committing' as TradePhase
+        };
       }),
       
       receivePartnerCommitment: (partnerCommitment: string) => set({
@@ -84,24 +117,63 @@ const useTradingStore = create<TradingStore>()(
         tradePhase: 'revealing' as TradePhase
       }),
       
-      revealTrade: (reveal: string) => set((state) => ({
-        reveal,
-        tradePhase: state.partnerReveal ? 'completed' as TradePhase : 'revealing' as TradePhase
-      })),
+      revealTrade: () => set((state) => {
+        if (!state.tradeCommitment?.reveal) return state;
+        
+        const revealData = JSON.stringify(state.tradeCommitment.reveal);
+        
+        return {
+          reveal: revealData,
+          tradePhase: state.partnerReveal ? 'completed' as TradePhase : 'revealing' as TradePhase
+        };
+      }),
       
       receivePartnerReveal: (partnerReveal: string) => set((state) => ({
         partnerReveal,
         tradePhase: state.reveal ? 'completed' as TradePhase : 'revealing' as TradePhase
       })),
       
-      completeTrade: () => set({
-        isTradeActive: false,
-        currentTrade: null,
-        tradePhase: 'idle' as TradePhase,
-        commitment: null,
-        reveal: null,
-        partnerCommitment: null,
-        partnerReveal: null
+      completeTrade: () => set((state) => {
+        // Validate and execute trade using service
+        if (state.commitment && state.reveal && state.partnerCommitment && state.partnerReveal && state.playerId) {
+          try {
+            const player1Commitment: Commitment = JSON.parse(state.commitment);
+            const player1Reveal: Reveal = JSON.parse(state.reveal);
+            const player2Commitment: Commitment = JSON.parse(state.partnerCommitment);
+            const player2Reveal: Reveal = JSON.parse(state.partnerReveal);
+            
+            const completedTrade = TradingService.executeTrade(
+              state.playerId,
+              player1Commitment,
+              player1Reveal,
+              'partner-id', // TODO: Get from partner
+              player2Commitment,
+              player2Reveal,
+              state.tradeSessionId || ''
+            );
+            
+            if (completedTrade) {
+              // Trade completed successfully
+              console.log('Trade completed:', completedTrade);
+            }
+          } catch (error) {
+            console.error('Failed to complete trade:', error);
+          }
+        }
+        
+        return {
+          isTradeActive: false,
+          currentTrade: null,
+          tradePhase: 'idle' as TradePhase,
+          commitment: null,
+          reveal: null,
+          partnerCommitment: null,
+          partnerReveal: null,
+          tradeSessionId: null,
+          tradeCommitment: null,
+          validationErrors: [],
+          fairnessAssessment: null
+        };
       }),
       
       cancelTrade: () => set({
@@ -111,7 +183,11 @@ const useTradingStore = create<TradingStore>()(
         commitment: null,
         reveal: null,
         partnerCommitment: null,
-        partnerReveal: null
+        partnerReveal: null,
+        tradeSessionId: null,
+        tradeCommitment: null,
+        validationErrors: [],
+        fairnessAssessment: null
       }),
       
       clearTradeRequests: () => set({ tradeRequests: [] }),
@@ -122,8 +198,8 @@ const useTradingStore = create<TradingStore>()(
         if (!currentTrade) return null;
         
         return currentTrade.initiator === playerId 
-          ? { id: currentTrade.target, name: currentTrade.targetName }
-          : { id: currentTrade.initiator, name: currentTrade.targetName };
+          ? { id: currentTrade.target, name: currentTrade.targetPlayerName }
+          : { id: currentTrade.initiator, name: currentTrade.initiatorPlayerName };
       },
       
       isTradeReady: () => {
@@ -135,7 +211,7 @@ const useTradingStore = create<TradingStore>()(
       
       canReveal: () => {
         const { tradePhase, commitment, partnerCommitment } = get();
-        return tradePhase === 'revealing' && commitment !== null && partnerCommitment !== null;
+        return tradePhase === 'committed' && commitment && partnerCommitment !== null;
       },
       
       isTradeCompleted: () => {

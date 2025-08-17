@@ -1,6 +1,7 @@
 // Trading-related type definitions
 
 import { LootItem } from './loot.types';
+import { TradeCommitment } from '../services/trading/commit-reveal.service';
 
 export interface Player {
   id: string;
@@ -13,15 +14,19 @@ export interface Player {
 export interface TradeRequest {
   id: number;
   initiator: string;
+  initiatorPlayerId: string;
+  initiatorPlayerName: string;
   target: string;
-  targetName: string;
+  targetPlayerId: string;
+  targetPlayerName: string;
   offeredItems: LootItem[];
   requestedItems: LootItem[];
   status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
   createdAt: string;
+  timestamp: number;
 }
 
-export type TradePhase = 'idle' | 'requesting' | 'negotiating' | 'committing' | 'revealing' | 'completed';
+export type TradePhase = 'idle' | 'requesting' | 'negotiating' | 'committed' | 'revealed' | 'completed';
 
 export interface TradingStoreState {
   isTradeActive: boolean;
@@ -35,20 +40,29 @@ export interface TradingStoreState {
   reveal: string | null;
   partnerCommitment: string | null;
   partnerReveal: string | null;
+  tradeSessionId: string | null;
+  tradeCommitment: TradeCommitment | null;
+  validationErrors: string[];
+  fairnessAssessment: {
+    isFair: boolean;
+    player1Value: number;
+    player2Value: number;
+    suggestion?: string;
+  } | null;
 }
 
 export interface TradingStoreActions {
   setPlayerId: (id: string) => void;
   setPlayerName: (name: string) => void;
   updateConnectedPlayers: (players: Player[]) => void;
-  initiateTradeWith: (targetPlayerId: string, targetPlayerName: string, offeredItems: LootItem[]) => void;
+  initiateTradeWith: (targetPlayerId: string, targetPlayerName: string, offeredItems: LootItem[], initiatorPublicKey: string) => void;
   receiveTradeRequest: (tradeRequest: TradeRequest) => void;
   acceptTradeRequest: (tradeId: number) => void;
   rejectTradeRequest: (tradeId: number) => void;
   updateTradeOffer: (offeredItems: LootItem[], requestedItems: LootItem[]) => void;
-  commitToTrade: (commitment: string) => void;
+  commitToTrade: (offeredItems: LootItem[]) => void;
   receivePartnerCommitment: (partnerCommitment: string) => void;
-  revealTrade: (reveal: string) => void;
+  revealTrade: () => void;
   receivePartnerReveal: (partnerReveal: string) => void;
   completeTrade: () => void;
   cancelTrade: () => void;
