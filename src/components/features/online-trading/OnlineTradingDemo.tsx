@@ -28,6 +28,12 @@ export const OnlineTradingDemo: React.FC = () => {
   const [currentRoom, setCurrentRoom] = useState<TradingRoom | null>(null);
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [tradeTargetPlayer, setTradeTargetPlayer] = useState<string | null>(null);
+  const [showAcceptTradeModal, setShowAcceptTradeModal] = useState(false);
+  const [acceptingTradeId, setAcceptingTradeId] = useState<string | null>(null);
+  const [respondingItems, setRespondingItems] = useState<LootItem[]>([]);
+  const [existingTradeItems, setExistingTradeItems] = useState<LootItem[]>([]);
+  const [isModifyingTrade, setIsModifyingTrade] = useState(false);
+  const [hasAcceptedTrade, setHasAcceptedTrade] = useState(false);
 
   const { playerName, isLoggedIn } = usePlayerStore();
   const { items: inventory } = useInventoryStore();
@@ -43,6 +49,7 @@ export const OnlineTradingDemo: React.FC = () => {
     isTrading,
     tradeError,
     initiateTrade,
+    acceptTrade,
     cancelTrade,
     hasActiveTrades,
     hasPendingRequests,
@@ -155,9 +162,14 @@ export const OnlineTradingDemo: React.FC = () => {
   };
 
   const handleSendTradeRequest = () => {
-    if (tradeTargetPlayer && selectedItems.length > 0) {
+    // Combine existing trade items with newly selected items
+    const allOfferedItems = isModifyingTrade 
+      ? [...existingTradeItems, ...selectedItems]
+      : selectedItems;
+      
+    if (tradeTargetPlayer && allOfferedItems.length > 0) {
       // Convert inventory items to WebSocket format
-      const tradeItems: WebSocketLootItem[] = selectedItems.map(item => ({
+      const tradeItems: WebSocketLootItem[] = allOfferedItems.map(item => ({
         id: item.id,
         name: item.name,
         type: item.type,
@@ -176,10 +188,18 @@ export const OnlineTradingDemo: React.FC = () => {
         }
       }));
       
+      // If we're modifying an existing trade, cancel it first
+      if (acceptingTradeId) {
+        cancelTrade(acceptingTradeId);
+      }
+      
       initiateTrade(tradeTargetPlayer, tradeItems);
       setShowTradeModal(false);
       setSelectedItems([]);
       setTradeTargetPlayer(null);
+      setAcceptingTradeId(null);
+      setExistingTradeItems([]);
+      setIsModifyingTrade(false);
     }
   };
 
@@ -187,6 +207,69 @@ export const OnlineTradingDemo: React.FC = () => {
     setShowTradeModal(false);
     setSelectedItems([]);
     setTradeTargetPlayer(null);
+    setAcceptingTradeId(null);
+    setExistingTradeItems([]);
+    setIsModifyingTrade(false);
+  };
+
+  const handleOpenAcceptTradeModal = (tradeId: string) => {
+    setAcceptingTradeId(tradeId);
+    setShowAcceptTradeModal(true);
+    setRespondingItems([]);
+    setHasAcceptedTrade(false);
+  };
+
+  const handleRespondingItemSelection = (item: LootItem) => {
+    setRespondingItems(prev => {
+      const isSelected = prev.some(selected => selected.id === item.id);
+      if (isSelected) {
+        return prev.filter(selected => selected.id !== item.id);
+      } else {
+        return [...prev, item];
+      }
+    });
+  };
+
+  const handleAcceptTrade = () => {
+    if (acceptingTradeId && !hasAcceptedTrade) {
+      // First acceptance - show the full trading interface
+      setHasAcceptedTrade(true);
+    } else if (acceptingTradeId && hasAcceptedTrade) {
+      // Final acceptance with items - complete the trade
+      acceptTrade(acceptingTradeId);
+      setShowAcceptTradeModal(false);
+      setRespondingItems([]);
+      setAcceptingTradeId(null);
+      setHasAcceptedTrade(false);
+    }
+  };
+
+  const handleCancelAcceptTrade = () => {
+    setShowAcceptTradeModal(false);
+    setRespondingItems([]);
+    setAcceptingTradeId(null);
+    setHasAcceptedTrade(false);
+  };
+
+  const handleModifyTrade = (tradeId: string) => {
+    // Find the trade and set up modify mode
+    const trade = pendingTradeRequests.find(t => t.id === tradeId);
+    if (trade) {
+      // Store the trade ID we're modifying
+      setAcceptingTradeId(tradeId);
+      setTradeTargetPlayer(trade.targetId);
+      setShowTradeModal(true);
+      setIsModifyingTrade(true);
+      
+      // Convert trade items back to inventory items for display
+      const existingItems = inventory.filter(item => 
+        trade.initiatorItems.some(tradeItem => tradeItem.id === item.id)
+      );
+      setExistingTradeItems(existingItems);
+      
+      // Start with no new selections (user can add to existing offer)
+      setSelectedItems([]);
+    }
   };
 
   // Show message if not logged in
@@ -379,13 +462,44 @@ export const OnlineTradingDemo: React.FC = () => {
         {hasPendingRequests && (
           <div className={styles.pendingRequests}>
             <h4>Pending Trade Requests ({pendingTradeRequests.length})</h4>
-            {pendingTradeRequests.map(trade => (
-              <div key={trade.id} className={styles.tradeRequest}>
-                <p>Trade request from player</p>
-                <p>Items offered: {trade.initiatorItems.length}</p>
-                <button onClick={() => cancelTrade(trade.id)}>Decline</button>
-              </div>
-            ))}
+            {pendingTradeRequests.map(trade => {
+              // Check if current player is the initiator of this trade
+              // Find the actual UUID for the current player
+              const myPlayerRecord = onlinePlayers.find(p => p.name === playerName);
+              const myPlayerId = myPlayerRecord?.id;
+              const isMyTrade = trade.initiatorId === myPlayerId;
+              // Get the other player's info
+              const otherPlayerId = isMyTrade ? trade.targetId : trade.initiatorId;
+              const otherPlayerName = onlinePlayers.find(p => p.id === otherPlayerId)?.name || otherPlayerId;
+              
+              return (
+                <div key={trade.id} className={styles.tradeRequest}>
+                  <p>Trade request {isMyTrade ? 'to' : 'from'} player: <strong>{otherPlayerName}</strong></p>
+                  <p>Items offered: {trade.initiatorItems.length}</p>
+                  
+                  <div className={styles.tradeActions}>
+                    {isMyTrade ? (
+                      <button 
+                        onClick={() => handleModifyTrade(trade.id)}
+                        className={styles.modifyButton}
+                      >
+                        Modify
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handleOpenAcceptTradeModal(trade.id)}
+                        className={styles.acceptButton}
+                      >
+                        Accept
+                      </button>
+                    )}
+                    <button onClick={() => cancelTrade(trade.id)} className={styles.declineButton}>
+                      {isMyTrade ? 'Cancel' : 'Decline'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -393,33 +507,95 @@ export const OnlineTradingDemo: React.FC = () => {
       {/* Trade Modal */}
       {showTradeModal && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <h3>Select Items to Trade</h3>
-            <p>Choose items from your inventory to offer in trade:</p>
+          <div className={styles.tradeModal}>
+            <h3>{isModifyingTrade ? 'Modify Trade Offer' : 'Create Trade Offer'}</h3>
             
-            <div className={styles.modalInventory}>
-              {inventory.map(item => (
-                <LootItemComponent
-                  key={item.id}
-                  item={item}
-                  publicKey={playerName || ''}
-                  showVerification={false}
-                  selectable={true}
-                  selected={selectedItems.some(selected => selected.id === item.id)}
-                  onSelect={handleItemSelection}
-                />
-              ))}
+            <div className={styles.tradeModalContent}>
+              {/* Left Side - Inventory */}
+              <div className={styles.inventorySection}>
+                <h4>Your Inventory</h4>
+                <p>Click items to add to your offer:</p>
+                <div className={styles.modalInventory}>
+                  {inventory
+                    .filter(item => !existingTradeItems.some(existing => existing.id === item.id))
+                    .map(item => (
+                    <LootItemComponent
+                      key={item.id}
+                      item={item}
+                      publicKey={playerName || ''}
+                      showVerification={false}
+                      selectable={true}
+                      selected={selectedItems.some(selected => selected.id === item.id)}
+                      onSelect={handleItemSelection}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Right Side - Current Offer */}
+              <div className={styles.offerSection}>
+                <h4>Your Trade Offer</h4>
+                
+                {/* Existing items (if modifying) */}
+                {isModifyingTrade && existingTradeItems.length > 0 && (
+                  <div className={styles.existingOffer}>
+                    <h5>Currently Offered:</h5>
+                    <div className={styles.existingItems}>
+                      {existingTradeItems.map(item => (
+                        <div key={item.id} className={styles.existingTradeItem}>
+                          <LootItemComponent
+                            item={item}
+                            publicKey={playerName || ''}
+                            showVerification={false}
+                            selectable={false}
+                          />
+                          <div className={styles.existingLabel}>Already in trade</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* New selections */}
+                <div className={styles.newOffer}>
+                  <h5>{isModifyingTrade ? 'Adding to Offer:' : 'Selected Items:'}</h5>
+                  {selectedItems.length === 0 ? (
+                    <p className={styles.emptyOffer}>No {isModifyingTrade ? 'additional ' : ''}items selected</p>
+                  ) : (
+                    <div className={styles.selectedItems}>
+                      {selectedItems.map(item => (
+                        <LootItemComponent
+                          key={item.id}
+                          item={item}
+                          publicKey={playerName || ''}
+                          showVerification={false}
+                          selectable={true}
+                          selected={true}
+                          onSelect={handleItemSelection}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
             
             <div className={styles.modalActions}>
-              <p>Selected: {selectedItems.length} items</p>
+              <div className={styles.offerSummary}>
+                <p>
+                  Total offer: {existingTradeItems.length + selectedItems.length} items
+                  {isModifyingTrade && (
+                    <span> ({existingTradeItems.length} existing + {selectedItems.length} new)</span>
+                  )}
+                </p>
+              </div>
               <div className={styles.buttonGroup}>
                 <button 
                   onClick={handleSendTradeRequest}
-                  disabled={selectedItems.length === 0}
+                  disabled={!isModifyingTrade && selectedItems.length === 0}
                   className={styles.primaryButton}
                 >
-                  Send Trade Request
+                  {isModifyingTrade ? 'Update Trade' : 'Send Trade Request'}
                 </button>
                 <button 
                   onClick={handleCancelTrade}
@@ -430,6 +606,136 @@ export const OnlineTradingDemo: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Accept Trade Modal */}
+      {showAcceptTradeModal && acceptingTradeId && (
+        <div className={styles.modalOverlay}>
+          {!hasAcceptedTrade ? (
+            /* Initial Accept/Decline Dialog */
+            <div className={styles.modal}>
+              <h3>Trade Request</h3>
+              <p>You have received a trade request. Would you like to proceed to the trading interface?</p>
+              <p><em>You'll be able to view their offer and select your own items once you proceed.</em></p>
+              
+              <div className={styles.modalActions}>
+                <div className={styles.buttonGroup}>
+                  <button 
+                    onClick={handleAcceptTrade}
+                    className={styles.primaryButton}
+                  >
+                    Proceed to Trade
+                  </button>
+                  <button 
+                    onClick={handleCancelAcceptTrade}
+                    className={styles.secondaryButton}
+                  >
+                    Decline
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Full Trading Interface */
+            <div className={styles.tradeModal}>
+              <h3>Trade Interface</h3>
+              
+              <div className={styles.tradeModalContent}>
+                {/* Left Side - Your Inventory */}
+                <div className={styles.inventorySection}>
+                  <h4>Your Inventory</h4>
+                  <p>Click items to add to your offer:</p>
+                  <div className={styles.modalInventory}>
+                    {inventory.map(item => (
+                      <LootItemComponent
+                        key={item.id}
+                        item={item}
+                        publicKey={playerName || ''}
+                        showVerification={false}
+                        selectable={true}
+                        selected={respondingItems.some(selected => selected.id === item.id)}
+                        onSelect={handleRespondingItemSelection}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Middle - Your Offer */}
+                <div className={styles.offerSection}>
+                  <h4>Your Offer</h4>
+                  <div className={styles.newOffer}>
+                    <h5>Selected Items:</h5>
+                    {respondingItems.length === 0 ? (
+                      <p className={styles.emptyOffer}>No items selected</p>
+                    ) : (
+                      <div className={styles.selectedItems}>
+                        {respondingItems.map(item => (
+                          <LootItemComponent
+                            key={item.id}
+                            item={item}
+                            publicKey={playerName || ''}
+                            showVerification={false}
+                            selectable={true}
+                            selected={true}
+                            onSelect={handleRespondingItemSelection}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Right Side - Their Offer */}
+                <div className={styles.theirOfferSection}>
+                  <h4>Their Offer</h4>
+                  {(() => {
+                    const trade = pendingTradeRequests.find(t => t.id === acceptingTradeId);
+                    return trade ? (
+                      <div className={styles.theirItems}>
+                        <h5>They are offering:</h5>
+                        <div className={styles.offeredItemsGrid}>
+                          {trade.initiatorItems.map((item, index) => (
+                            <div key={index} className={styles.tradeItemCard}>
+                              <div className={`${styles.itemName} ${styles[item.rarity.toLowerCase()]}`}>
+                                {item.name}
+                              </div>
+                              <div className={styles.itemDetails}>
+                                <span className={styles.itemType}>{item.type}</span>
+                                {item.modifier && (
+                                  <span className={styles.itemModifier}>{item.modifier}</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+              </div>
+              
+              <div className={styles.modalActions}>
+                <div className={styles.offerSummary}>
+                  <p>Your offer: {respondingItems.length} items</p>
+                </div>
+                <div className={styles.buttonGroup}>
+                  <button 
+                    onClick={handleAcceptTrade}
+                    className={styles.primaryButton}
+                  >
+                    Complete Trade
+                  </button>
+                  <button 
+                    onClick={handleCancelAcceptTrade}
+                    className={styles.secondaryButton}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

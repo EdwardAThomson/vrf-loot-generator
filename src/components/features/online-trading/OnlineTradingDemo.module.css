@@ -339,24 +339,101 @@
 }
 
 .tradeRequest {
-  padding: 10px;
+  padding: 15px;
   margin: 10px 0;
   background: white;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 8px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.tradeRequest button {
-  padding: 4px 8px;
+.tradeActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.acceptButton {
+  padding: 6px 12px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.acceptButton:hover {
+  background: #218838;
+}
+
+.modifyButton {
+  padding: 6px 12px;
+  background: #ffc107;
+  color: #212529;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.modifyButton:hover {
+  background: #e0a800;
+}
+
+.declineButton {
+  padding: 6px 12px;
   background: #dc3545;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
+  font-weight: 500;
+}
+
+.declineButton:hover {
+  background: #c82333;
+}
+
+.offeredItems {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.offeredItems h5 {
+  margin: 0 0 8px 0;
+  color: #495057;
+  font-size: 14px;
+}
+
+.itemsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.offeredItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  min-width: 120px;
+}
+
+.itemType {
+  font-size: 11px;
+  color: #6c757d;
+  font-style: italic;
 }
 
 /* Inventory Grid */
@@ -397,6 +474,11 @@
 .rarity.epic { background: #9b59b6; color: white; }
 .rarity.legendary { background: #f39c12; color: white; }
 
+.common { background: #95a5a6; color: white; }
+.rare { background: #3498db; color: white; }
+.epic { background: #9b59b6; color: white; }
+.legendary { background: #f39c12; color: white; }
+
 .itemDetails {
   display: flex;
   flex-direction: column;
@@ -432,6 +514,151 @@
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* New Trade Modal Styles */
+.tradeModal {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 1000px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.tradeModalContent {
+  display: flex;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.inventorySection {
+  flex: 1;
+  min-width: 0;
+}
+
+.theirOfferSection {
+  flex: 1;
+  min-width: 0;
+  border-left: 2px solid #dee2e6;
+  padding-left: 1.5rem;
+}
+
+.theirOfferSection h4 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  border-bottom: 2px solid #dc3545;
+  padding-bottom: 0.5rem;
+}
+
+.theirItems h5 {
+  margin: 0 0 0.75rem 0;
+  color: #495057;
+  font-size: 14px;
+}
+
+.inventorySection h4 {
+  margin: 0 0 0.5rem 0;
+  color: #495057;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 0.5rem;
+}
+
+.inventorySection p {
+  margin: 0 0 1rem 0;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.offerSection {
+  flex: 1;
+  min-width: 0;
+  border-left: 2px solid #dee2e6;
+  padding-left: 1.5rem;
+}
+
+.offerSection h4 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  border-bottom: 2px solid #28a745;
+  padding-bottom: 0.5rem;
+}
+
+.existingOffer {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.existingOffer h5 {
+  margin: 0 0 0.75rem 0;
+  color: #495057;
+  font-size: 14px;
+}
+
+.existingItems {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.existingTradeItem {
+  position: relative;
+}
+
+.existingLabel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(40, 167, 69, 0.9);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 0 0 0 4px;
+  font-weight: bold;
+}
+
+.newOffer h5 {
+  margin: 0 0 0.75rem 0;
+  color: #495057;
+  font-size: 14px;
+}
+
+.emptyOffer {
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  margin: 0;
+}
+
+.selectedItems {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.offerSummary {
+  padding: 1rem;
+  background: #e9ecef;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.offerSummary p {
+  margin: 0;
+  font-weight: bold;
+  color: #495057;
+}
+
+.offerSummary span {
+  color: #6c757d;
+  font-weight: normal;
 }
 
 .modalInventory {
@@ -496,4 +723,62 @@
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
   cursor: pointer;
+}
+
+/* Accept Trade Modal Styles */
+.tradeDetails {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.tradeDetails h4 {
+  margin: 0 0 10px 0;
+  color: #495057;
+}
+
+.offeredItemsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.tradeItemCard {
+  padding: 10px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.itemName {
+  font-weight: bold;
+  margin-bottom: 5px;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.itemDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.itemModifier {
+  font-style: italic;
+  color: #8e44ad;
+}
+
+.responseSection {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #dee2e6;
+}
+
+.responseSection h4 {
+  margin: 0 0 15px 0;
+  color: #495057;
 }
