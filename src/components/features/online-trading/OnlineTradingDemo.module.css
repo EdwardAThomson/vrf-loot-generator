@@ -19,6 +19,49 @@
   padding-bottom: 10px;
 }
 
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.sectionHeader h3 {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.generateButton {
+  padding: 8px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.generateButton:hover {
+  background: #218838;
+}
+
+.generateButton:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.emptyInventory {
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
 .status {
   font-weight: bold;
   margin-bottom: 15px;
@@ -326,6 +369,47 @@
   margin-top: 10px;
 }
 
+.statusExplanation {
+  margin: 10px 0;
+  padding: 10px;
+  background: #e7f3ff;
+  border-left: 4px solid #2196F3;
+  border-radius: 4px;
+}
+
+.statusExplanation p {
+  margin: 0;
+  color: #1976D2;
+  font-weight: 500;
+}
+
+.tradeProgress {
+  margin: 15px 0;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.tradeProgress h5 {
+  margin: 10px 0 5px 0;
+  color: #495057;
+  font-size: 13px;
+}
+
+.miniItemList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.miniItemList span {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .pendingRequests {
   padding: 15px;
   background: #f8d7da;
@@ -368,6 +452,21 @@
 
 .acceptButton:hover {
   background: #218838;
+}
+
+.viewButton {
+  padding: 6px 12px;
+  background: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.viewButton:hover {
+  background: #138496;
 }
 
 .modifyButton {
@@ -521,8 +620,10 @@
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
-  max-width: 1000px;
-  max-height: 85vh;
+  width: 90vw;
+  max-width: 1500px;
+  height: 90vh;
+  max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
@@ -666,7 +767,7 @@
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 0.75rem;
   margin: 1rem 0;
-  max-height: 300px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
@@ -772,6 +873,11 @@
   color: #8e44ad;
 }
 
+.itemRarity {
+  font-weight: bold;
+  font-size: 11px;
+}
+
 .responseSection {
   margin-top: 20px;
   padding-top: 20px;
@@ -781,4 +887,123 @@
 .responseSection h4 {
   margin: 0 0 15px 0;
   color: #495057;
+}
+
+/* Execution Log Styles */
+.logControls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.clearLogButton {
+  padding: 6px 12px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.clearLogButton:hover {
+  background: #5a6268;
+}
+
+.executionLog {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 15px;
+  border-radius: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.emptyLog {
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.logEntry {
+  margin-bottom: 4px;
+  padding: 2px 0;
+}
+
+.logEntry.info {
+  color: #d4d4d4;
+}
+
+.logEntry.success {
+  color: #4ec9b0;
+}
+
+.logEntry.error {
+  color: #f14c4c;
+}
+
+.logEntry.warning {
+  color: #cca700;
+}
+
+.logTimestamp {
+  color: #6a9955;
+  margin-right: 8px;
+}
+
+.logMessage {
+  white-space: pre-wrap;
+}
+
+/* VRF Verification Results */
+.verificationResults {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.verificationResults h4 {
+  margin: 0 0 10px 0;
+  color: #495057;
+  font-size: 14px;
+}
+
+.verificationItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  background: white;
+  border: 1px solid #dee2e6;
+}
+
+.verificationItem.valid {
+  border-left: 4px solid #28a745;
+}
+
+.verificationItem.invalid {
+  border-left: 4px solid #dc3545;
+}
+
+.verificationIcon {
+  font-size: 16px;
+}
+
+.verificationName {
+  font-weight: 600;
+  color: #212529;
+}
+
+.verificationReason {
+  font-size: 12px;
+  color: #dc3545;
+  margin-left: auto;
 }

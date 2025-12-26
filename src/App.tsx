@@ -4,6 +4,7 @@ import { VRFTesting } from './components/features/vrf-testing/VRFTesting';
 import { LootGenerator } from './components/features/loot-generator/LootGenerator';
 import { TradingSystem } from './components/features/trading/TradingSystem';
 import { OnlineTradingDemo } from './components/features/online-trading/OnlineTradingDemo';
+import { DeterministicTradeDemo } from './components/features/deterministic-trade/DeterministicTradeDemo';
 import { PlayerSession } from './components/layout/PlayerSession';
 import './styles/globals.css';
 
@@ -22,6 +23,7 @@ function App() {
   const tabs: Tab[] = [
     { id: 'vrf', label: 'VRF Testing', component: VRFTesting },
     { id: 'loot', label: 'Loot Generator', component: LootGenerator },
+    { id: 'trade-demo', label: 'Trade Demo', component: DeterministicTradeDemo },
     { id: 'trading', label: 'Trading System', component: OnlineTradingDemo }
   ];
 

@@ -34,6 +34,8 @@ export const OnlineTradingDemo: React.FC = () => {
   const [existingTradeItems, setExistingTradeItems] = useState<LootItem[]>([]);
   const [isModifyingTrade, setIsModifyingTrade] = useState(false);
   const [hasAcceptedTrade, setHasAcceptedTrade] = useState(false);
+  const [showViewTradeModal, setShowViewTradeModal] = useState(false);
+  const [viewingTradeId, setViewingTradeId] = useState<string | null>(null);
 
   const { playerName, isLoggedIn } = usePlayerStore();
   const { items: inventory } = useInventoryStore();
@@ -48,9 +50,14 @@ export const OnlineTradingDemo: React.FC = () => {
     currentTrade,
     isTrading,
     tradeError,
+    tradeLog,
+    verificationResults,
     initiateTrade,
     acceptTrade,
+    commitToTrade,
+    revealTrade,
     cancelTrade,
+    clearTradeLog,
     hasActiveTrades,
     hasPendingRequests,
     canInitiateTrade
@@ -62,6 +69,7 @@ export const OnlineTradingDemo: React.FC = () => {
       setNewRoomName('');
     }
   };
+
 
 
   const leaveRoom = () => {
@@ -168,25 +176,51 @@ export const OnlineTradingDemo: React.FC = () => {
       : selectedItems;
       
     if (tradeTargetPlayer && allOfferedItems.length > 0) {
-      // Convert inventory items to WebSocket format
-      const tradeItems: WebSocketLootItem[] = allOfferedItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        type: item.type,
-        rarity: item.rarity as 'Common' | 'Rare' | 'Epic' | 'Legendary',
-        modifier: item.modifier,
-        vrfProof: item.vrfData ? {
-          publicKey: item.vrfData.publicKey,
-          proof: typeof item.vrfData.proof === 'string' ? item.vrfData.proof : 'demo-proof',
-          message: item.vrfData.message,
-          hash: 'demo-hash'
-        } : {
-          publicKey: 'demo-key',
-          proof: 'demo-proof', 
-          message: 'demo-message',
-          hash: 'demo-hash'
+      // Convert inventory items to WebSocket format with proper VRF data
+      const tradeItems: WebSocketLootItem[] = allOfferedItems.map(item => {
+        // Convert proof to string if it's Uint8Array
+        let proofString = '';
+        if (item.vrfData?.proof) {
+          if (typeof item.vrfData.proof === 'string') {
+            proofString = item.vrfData.proof;
+          } else {
+            proofString = Array.from(item.vrfData.proof)
+              .map(b => b.toString(16).padStart(2, '0'))
+              .join('');
+          }
         }
-      }));
+        
+        // Convert vrfOutput to string if it's Uint8Array
+        let vrfOutputString = '';
+        if (item.vrfData?.vrfOutput) {
+          if (typeof item.vrfData.vrfOutput === 'string') {
+            vrfOutputString = item.vrfData.vrfOutput;
+          } else {
+            vrfOutputString = Array.from(item.vrfData.vrfOutput)
+              .map(b => b.toString(16).padStart(2, '0'))
+              .join('');
+          }
+        }
+        
+        return {
+          id: item.id,
+          name: item.name,
+          type: item.type,
+          rarity: item.rarity as 'Common' | 'Rare' | 'Epic' | 'Legendary',
+          modifier: item.modifier,
+          vrfProof: item.vrfData ? {
+            publicKey: item.vrfData.publicKey,
+            proof: proofString,
+            message: item.vrfData.message,
+            hash: vrfOutputString
+          } : {
+            publicKey: '',
+            proof: '',
+            message: '',
+            hash: ''
+          }
+        };
+      });
       
       // If we're modifying an existing trade, cancel it first
       if (acceptingTradeId) {
@@ -194,6 +228,12 @@ export const OnlineTradingDemo: React.FC = () => {
       }
       
       initiateTrade(tradeTargetPlayer, tradeItems);
+      
+      // Store items for later commit/reveal when Player 2 responds
+      // We'll use a temporary ID and update it when we get the real trade ID
+      const tempId = `temp-${Date.now()}`;
+      sessionStorage.setItem(`pending_trade_items`, JSON.stringify(tradeItems));
+      
       setShowTradeModal(false);
       setSelectedItems([]);
       setTradeTargetPlayer(null);
@@ -234,9 +274,71 @@ export const OnlineTradingDemo: React.FC = () => {
     if (acceptingTradeId && !hasAcceptedTrade) {
       // First acceptance - show the full trading interface
       setHasAcceptedTrade(true);
-    } else if (acceptingTradeId && hasAcceptedTrade) {
-      // Final acceptance with items - complete the trade
-      acceptTrade(acceptingTradeId);
+    } else if (acceptingTradeId && hasAcceptedTrade && respondingItems.length > 0) {
+      // Convert responding items to WebSocket format with proper VRF data
+      const tradeItems: WebSocketLootItem[] = respondingItems.map(item => {
+        // Convert proof to string if it's Uint8Array
+        let proofString = '';
+        if (item.vrfData?.proof) {
+          if (typeof item.vrfData.proof === 'string') {
+            proofString = item.vrfData.proof;
+          } else {
+            // Convert Uint8Array to hex string
+            proofString = Array.from(item.vrfData.proof)
+              .map(b => b.toString(16).padStart(2, '0'))
+              .join('');
+          }
+        }
+        
+        // Convert vrfOutput to string if it's Uint8Array
+        let vrfOutputString = '';
+        if (item.vrfData?.vrfOutput) {
+          if (typeof item.vrfData.vrfOutput === 'string') {
+            vrfOutputString = item.vrfData.vrfOutput;
+          } else {
+            // Convert Uint8Array to hex string
+            vrfOutputString = Array.from(item.vrfData.vrfOutput)
+              .map(b => b.toString(16).padStart(2, '0'))
+              .join('');
+          }
+        }
+        
+        return {
+          id: item.id,
+          name: item.name,
+          type: item.type,
+          rarity: item.rarity as 'Common' | 'Rare' | 'Epic' | 'Legendary',
+          modifier: item.modifier,
+          vrfProof: item.vrfData ? {
+            publicKey: item.vrfData.publicKey,
+            proof: proofString,
+            message: item.vrfData.message,
+            hash: vrfOutputString
+          } : {
+            publicKey: '',
+            proof: '',
+            message: '',
+            hash: ''
+          }
+        };
+      });
+      
+      // Send counter-offer by committing to trade
+      const itemsString = JSON.stringify(tradeItems);
+      const CryptoJS = require('crypto-js');
+      const nonce = Math.random().toString(36).substring(2, 15);
+      const commitment = CryptoJS.SHA256(itemsString + nonce).toString();
+      
+      // Store nonce and items for later reveal
+      sessionStorage.setItem(`trade_nonce_${acceptingTradeId}`, nonce);
+      sessionStorage.setItem(`trade_items_${acceptingTradeId}`, itemsString);
+      
+      console.log(`Player 2 committing to trade ${acceptingTradeId} with ${tradeItems.length} items`);
+      
+      // Commit to trade (this sends the counter-offer)
+      commitToTrade(acceptingTradeId, commitment);
+      
+      // Close modal and reset state
       setShowAcceptTradeModal(false);
       setRespondingItems([]);
       setAcceptingTradeId(null);
@@ -270,6 +372,16 @@ export const OnlineTradingDemo: React.FC = () => {
       // Start with no new selections (user can add to existing offer)
       setSelectedItems([]);
     }
+  };
+
+  const handleViewTrade = (tradeId: string) => {
+    setViewingTradeId(tradeId);
+    setShowViewTradeModal(true);
+  };
+
+  const handleCloseViewTrade = () => {
+    setShowViewTradeModal(false);
+    setViewingTradeId(null);
   };
 
   // Show message if not logged in
@@ -441,7 +553,46 @@ export const OnlineTradingDemo: React.FC = () => {
           <div className={styles.currentTrade}>
             <h4>Current Trade</h4>
             <p>Trading with: {currentTrade.initiatorId === currentPlayer?.id ? currentTrade.targetId : currentTrade.initiatorId}</p>
-            <p>Status: {currentTrade.status}</p>
+            <p>Status: <strong>{currentTrade.status}</strong></p>
+            
+            {/* Status explanation */}
+            <div className={styles.statusExplanation}>
+              {currentTrade.status === 'INITIATED' && (
+                <p>⏳ Waiting for both players to commit their offers...</p>
+              )}
+              {currentTrade.status === 'COMMITTED' && (
+                <p>🔒 Both players committed. Waiting for reveals...</p>
+              )}
+              {currentTrade.status === 'REVEALED' && (
+                <p>✅ Both players revealed. Ready to complete trade!</p>
+              )}
+            </div>
+            
+            {/* Trade details */}
+            <div className={styles.tradeProgress}>
+              <h5>Initiator's Offer ({currentTrade.initiatorItems.length} items)</h5>
+              <div className={styles.miniItemList}>
+                {currentTrade.initiatorItems.map((item, idx) => (
+                  <span key={idx} className={styles[item.rarity.toLowerCase()]}>
+                    {item.name}
+                  </span>
+                ))}
+              </div>
+              
+              {currentTrade.targetItems && currentTrade.targetItems.length > 0 && (
+                <>
+                  <h5>Target's Offer ({currentTrade.targetItems.length} items)</h5>
+                  <div className={styles.miniItemList}>
+                    {currentTrade.targetItems.map((item, idx) => (
+                      <span key={idx} className={styles[item.rarity.toLowerCase()]}>
+                        {item.name}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            
             <button onClick={() => cancelTrade(currentTrade.id)}>Cancel Trade</button>
           </div>
         )}
@@ -479,19 +630,35 @@ export const OnlineTradingDemo: React.FC = () => {
                   
                   <div className={styles.tradeActions}>
                     {isMyTrade ? (
-                      <button 
-                        onClick={() => handleModifyTrade(trade.id)}
-                        className={styles.modifyButton}
-                      >
-                        Modify
-                      </button>
+                      <>
+                        <button 
+                          onClick={() => handleViewTrade(trade.id)}
+                          className={styles.viewButton}
+                        >
+                          View
+                        </button>
+                        <button 
+                          onClick={() => handleModifyTrade(trade.id)}
+                          className={styles.modifyButton}
+                        >
+                          Modify
+                        </button>
+                      </>
                     ) : (
-                      <button 
-                        onClick={() => handleOpenAcceptTradeModal(trade.id)}
-                        className={styles.acceptButton}
-                      >
-                        Accept
-                      </button>
+                      <>
+                        <button 
+                          onClick={() => handleViewTrade(trade.id)}
+                          className={styles.viewButton}
+                        >
+                          View
+                        </button>
+                        <button 
+                          onClick={() => handleOpenAcceptTradeModal(trade.id)}
+                          className={styles.acceptButton}
+                        >
+                          Accept
+                        </button>
+                      </>
                     )}
                     <button onClick={() => cancelTrade(trade.id)} className={styles.declineButton}>
                       {isMyTrade ? 'Cancel' : 'Decline'}
@@ -500,6 +667,52 @@ export const OnlineTradingDemo: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* Execution Log Panel */}
+      <div className={styles.section}>
+        <h3>📋 Trade Execution Log</h3>
+        <div className={styles.logControls}>
+          <button onClick={clearTradeLog} className={styles.clearLogButton}>
+            Clear Log
+          </button>
+        </div>
+        <div className={styles.executionLog}>
+          {tradeLog.length === 0 ? (
+            <p className={styles.emptyLog}>No trade activity yet. Initiate a trade to see the execution log.</p>
+          ) : (
+            tradeLog.map((entry, index) => (
+              <div 
+                key={index} 
+                className={`${styles.logEntry} ${styles[entry.type]}`}
+              >
+                <span className={styles.logTimestamp}>[{entry.timestamp}]</span>
+                <span className={styles.logMessage}>{entry.message}</span>
+              </div>
+            ))
+          )}
+        </div>
+        
+        {/* VRF Verification Results */}
+        {verificationResults.length > 0 && (
+          <div className={styles.verificationResults}>
+            <h4>VRF Verification Results</h4>
+            {verificationResults.map((result, index) => (
+              <div 
+                key={index} 
+                className={`${styles.verificationItem} ${result.valid ? styles.valid : styles.invalid}`}
+              >
+                <span className={styles.verificationIcon}>
+                  {result.valid ? '✅' : '❌'}
+                </span>
+                <span className={styles.verificationName}>{result.itemName}</span>
+                {!result.valid && result.reason && (
+                  <span className={styles.verificationReason}>{result.reason}</span>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -701,6 +914,7 @@ export const OnlineTradingDemo: React.FC = () => {
                                 {item.name}
                               </div>
                               <div className={styles.itemDetails}>
+                                <span className={styles.itemRarity}>{item.rarity}</span>
                                 <span className={styles.itemType}>{item.type}</span>
                                 {item.modifier && (
                                   <span className={styles.itemModifier}>{item.modifier}</span>
@@ -722,9 +936,10 @@ export const OnlineTradingDemo: React.FC = () => {
                 <div className={styles.buttonGroup}>
                   <button 
                     onClick={handleAcceptTrade}
+                    disabled={respondingItems.length === 0}
                     className={styles.primaryButton}
                   >
-                    Complete Trade
+                    Confirm Trade
                   </button>
                   <button 
                     onClick={handleCancelAcceptTrade}
@@ -736,6 +951,85 @@ export const OnlineTradingDemo: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* View Trade Modal */}
+      {showViewTradeModal && viewingTradeId && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3>Trade Details</h3>
+            {(() => {
+              const trade = pendingTradeRequests.find(t => t.id === viewingTradeId);
+              if (!trade) return <p>Trade not found</p>;
+              
+              const myPlayerRecord = onlinePlayers.find(p => p.name === playerName);
+              const myPlayerId = myPlayerRecord?.id;
+              const isMyTrade = trade.initiatorId === myPlayerId;
+              const otherPlayerId = isMyTrade ? trade.targetId : trade.initiatorId;
+              const otherPlayerName = onlinePlayers.find(p => p.id === otherPlayerId)?.name || otherPlayerId;
+              
+              return (
+                <>
+                  <p>Trade with: <strong>{otherPlayerName}</strong></p>
+                  <p>Status: <strong>{trade.status}</strong></p>
+                  
+                  <div className={styles.tradeDetails}>
+                    <h4>{isMyTrade ? 'Your Offer' : 'Their Offer'}</h4>
+                    <div className={styles.offeredItemsGrid}>
+                      {trade.initiatorItems.map((item, index) => (
+                        <div key={index} className={styles.tradeItemCard}>
+                          <div className={`${styles.itemName} ${styles[item.rarity.toLowerCase()]}`}>
+                            {item.name}
+                          </div>
+                          <div className={styles.itemDetails}>
+                            <span className={styles.itemRarity}>{item.rarity}</span>
+                            <span className={styles.itemType}>{item.type}</span>
+                            {item.modifier && (
+                              <span className={styles.itemModifier}>{item.modifier}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {trade.targetItems && trade.targetItems.length > 0 && (
+                    <div className={styles.tradeDetails}>
+                      <h4>{isMyTrade ? 'Their Offer' : 'Your Offer'}</h4>
+                      <div className={styles.offeredItemsGrid}>
+                        {trade.targetItems.map((item, index) => (
+                          <div key={index} className={styles.tradeItemCard}>
+                            <div className={`${styles.itemName} ${styles[item.rarity.toLowerCase()]}`}>
+                              {item.name}
+                            </div>
+                            <div className={styles.itemDetails}>
+                              <span className={styles.itemRarity}>{item.rarity}</span>
+                              <span className={styles.itemType}>{item.type}</span>
+                              {item.modifier && (
+                                <span className={styles.itemModifier}>{item.modifier}</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className={styles.modalActions}>
+                    <div className={styles.buttonGroup}>
+                      <button 
+                        onClick={handleCloseViewTrade}
+                        className={styles.secondaryButton}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
         </div>
       )}
     </div>
