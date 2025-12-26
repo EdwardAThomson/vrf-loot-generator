@@ -19,6 +19,8 @@ The VRF code in this project is based upon the VRF library found in Google's Key
 - **Online Trading System**: A real-time, secure trading system for players to exchange items using a WebSocket server.
 - **Clean Architecture**: Separates concerns with a React/TypeScript frontend, custom hooks for logic, Zustand for state management, and a dedicated backend server.
 - **Component-Based UI**: Built with reusable React components and styled with CSS Modules.
+- **Cryptographically Secure Trade Protocol**: Implements a Commit-Reveal scheme to prevent trade tampering and front-running.
+- **Deterministic Educational Demo**: a visual guide to the cryptographic steps involved in a secure trade.
 
 ## Installation
 
@@ -68,8 +70,8 @@ After starting both the client and server, open `http://localhost:3000` in your 
 2.  **Loot Generation**: Generate a specified number of loot items using the VRF.
 3.  **Online Trading Demo**: Join a trading room and securely trade items with another player in real-time.
 
-![Section 1 Screenshot](Screenshot_20240906_section1.png)
-![Section 2 Screenshot](Screenshot_20240906_section2.png)
+![Section 1 Screenshot](screenshots/v2/Screenshot_20251226_195012_section1_v2.png)
+![Section 2 Screenshot](screenshots/v2/Screenshot_20251226_195053_section2_v2.png)
 
 ## Project Structure
 
@@ -90,5 +92,6 @@ This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENS
 
 ## Acknowledgements
 
-- ChatGPT XD
+- ChatGPT (original version!)
+- Coding assistance also from Claude and Gemini
 - Everyone at the Decentralized Gaming Association [DGA Discord](https://discord.com/invite/eZEVrSd)
