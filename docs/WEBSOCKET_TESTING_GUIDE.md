@@ -15,8 +15,9 @@ cd server
 npm run dev
 ```
 The server will start on port 3001 and show:
-- ✅ Server running on port 3001
-- ✅ WebSocket server initialized
+- 🚀 VRF Loot Trading Server running on port 3001
+- 📡 WebSocket endpoint: ws://localhost:3001
+- 🌐 CORS origin: http://localhost:3000
 
 ### 2. Start the Frontend
 ```bash
@@ -33,7 +34,7 @@ The React app will start on port 3000.
 5. Open the same URL in a new tab - you should remain connected without re-entering your name
 
 ### 4. Test Online Trading Demo
-1. Navigate to the "Online Trading" tab
+1. Navigate to the "Trading System" tab
 2. Verify you see the trading interface without needing to enter your name again
 3. Test room creation:
    - Enter a room name and click "Create Room"
