@@ -64,11 +64,12 @@ The server will be running on port `3001`.
 
 ## Usage
 
-After starting both the client and server, open `http://localhost:3000` in your browser. The application is divided into three main sections:
+After starting both the client and server, open `http://localhost:3000` in your browser. The application is organized into four tabs:
 
 1.  **VRF Testing**: Test the core VRF functionality by generating key pairs, computing VRF outputs, and verifying proofs.
-2.  **Loot Generation**: Generate a specified number of loot items using the VRF.
-3.  **Online Trading Demo**: Join a trading room and securely trade items with another player in real-time.
+2.  **Loot Generator**: Generate a specified number of loot items using the VRF.
+3.  **Trade Demo**: A deterministic, step-by-step walkthrough of the commit-reveal trade protocol with real VRF verification, intended for learning and debugging.
+4.  **Trading System**: Join a trading room and securely trade items with another player in real-time over WebSockets.
 
 ![Section 1 Screenshot](screenshots/v2/Screenshot_20251226_195012_section1_v2.png)
 ![Section 2 Screenshot](screenshots/v2/Screenshot_20251226_195053_section2_v2.png)
