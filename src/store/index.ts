@@ -6,6 +6,7 @@ import usePlayersStore from './players.store';
 
 // Export all Zustand stores
 export { default as useInventoryStore } from './inventory.store';
+export { default as useNotificationsStore } from './notifications.store';
 export { default as useTradingStore } from './trading.store';
 export { default as useVRFStore } from './vrf.store';
 export { default as usePlayersStore } from './players.store';

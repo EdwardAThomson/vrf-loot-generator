@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useTrading } from '../../../hooks/useTrading';
 import { useInventory } from '../../../hooks/useInventory';
 import { Player } from '../../../types/trading.types';
+import useNotificationsStore from '../../../store/notifications.store';
 import styles from './TradingSystem.module.css';
 
 /**
@@ -12,6 +13,8 @@ export const TradeInterface: React.FC = () => {
   const [targetPlayerId, setTargetPlayerId] = useState('');
   const [targetPlayerName, setTargetPlayerName] = useState('');
   const [showTradeForm, setShowTradeForm] = useState(false);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const notify = useNotificationsStore(state => state.notify);
 
   const { 
     startTrade, 
@@ -31,12 +34,12 @@ export const TradeInterface: React.FC = () => {
 
   const handleStartTrade = () => {
     if (!hasSelection()) {
-      alert('Please select items from your inventory first!');
+      notify('Select items from your inventory first.', 'error');
       return;
     }
 
     if (!targetPlayerId.trim() || !targetPlayerName.trim()) {
-      alert('Please enter target player details!');
+      notify('Enter the target player ID and name.', 'error');
       return;
     }
 
@@ -71,9 +74,13 @@ export const TradeInterface: React.FC = () => {
   };
 
   const handleCancelTrade = () => {
-    if (window.confirm('Are you sure you want to cancel this trade?')) {
-      cancelCurrentTrade();
-    }
+    setConfirmingCancel(true);
+  };
+
+  const handleConfirmCancel = () => {
+    setConfirmingCancel(false);
+    cancelCurrentTrade();
+    notify('Trade cancelled.', 'info');
   };
 
   // If no trade is active, show trade initiation form
@@ -247,12 +254,30 @@ export const TradeInterface: React.FC = () => {
               </button>
             )}
 
-            <button 
-              onClick={handleCancelTrade}
-              className={styles.dangerButton}
-            >
-              Cancel Trade
-            </button>
+            {!confirmingCancel ? (
+              <button
+                onClick={handleCancelTrade}
+                className={styles.dangerButton}
+              >
+                Cancel Trade
+              </button>
+            ) : (
+              <div className={styles.formActions}>
+                <span>Cancel this trade?</span>
+                <button
+                  onClick={handleConfirmCancel}
+                  className={styles.dangerButton}
+                >
+                  Yes, Cancel
+                </button>
+                <button
+                  onClick={() => setConfirmingCancel(false)}
+                  className={styles.secondaryButton}
+                >
+                  Keep Trading
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Trade Status Messages */}

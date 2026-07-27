@@ -23,6 +23,7 @@ import { LootService } from '../services/loot/loot.service';
 import { CommitRevealService } from '../services/trading/commit-reveal.service';
 import { LootCommitmentService } from '../services/loot/loot-commitment.service';
 import { TradingService } from '../services/trading/trading.service';
+import { DungeonService } from '../services/dungeon/dungeon.service';
 import { toHexString } from '../utils/format.utils';
 import { LootItem } from '../types/loot.types';
 
@@ -299,6 +300,33 @@ function main(): void {
       () => TradingService.prepareTradeCommitment('p1', [sealedItem]),
       'sealed item was committed to a trade'
     );
+  });
+
+  // ---- 7. Dungeon layout (public derivation) ------------------------------
+  check('Dungeon generation is deterministic (byte-identical across runs)', () => {
+    const a = DungeonService.generateFromTxHash(SAMPLE_BLOCKHASH);
+    const b = DungeonService.generateFromTxHash(SAMPLE_BLOCKHASH);
+    assert(JSON.stringify(a) === JSON.stringify(b), 'two runs from same tx hash differ');
+    const other = DungeonService.generateFromTxHash('other-sample-tx');
+    assert(
+      JSON.stringify(a.tiles) !== JSON.stringify(other.tiles),
+      'different tx hashes produced identical layouts'
+    );
+    return `${a.rooms.length} rooms, seed ${a.layoutSeedHex.slice(0, 16)}...`;
+  });
+
+  check('Dungeon item count and spots match (seed[31] % MAX_ITEMS) + 1', () => {
+    const seed = DungeonService.deriveLayoutSeed(SAMPLE_BLOCKHASH);
+    const dungeon = DungeonService.generateDungeon(seed);
+    const expected = DungeonService.deriveItemCount(seed);
+    assert(dungeon.itemCount === expected, 'itemCount does not match formula');
+    assert(dungeon.itemSpots.length === expected, 'itemSpots count does not match itemCount');
+    return `${expected} item spot(s)`;
+  });
+
+  check('Dungeon exit reachable from entrance (BFS over walkable tiles)', () => {
+    const dungeon = DungeonService.generateFromTxHash(SAMPLE_BLOCKHASH);
+    assert(DungeonService.isExitReachable(dungeon), 'exit not reachable from entrance');
   });
 
   // ---- Summary ------------------------------------------------------------

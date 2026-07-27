@@ -1,0 +1,203 @@
+/* Dungeon demo styles: deterministic grid rendering and layer summaries. */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.txInput {
+  flex: 1 1 420px;
+  min-width: 280px;
+}
+
+.explainer {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-left: 3px solid #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.derived {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+}
+
+.derivedField {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.derivedLabel {
+  font-weight: 600;
+  opacity: 0.75;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+
+.seedHex {
+  font-family: monospace;
+  word-break: break-all;
+  max-width: 640px;
+}
+
+.gridWrapper {
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  gap: 1px;
+  width: max-content;
+  padding: 6px;
+  background: #0f172a;
+  border-radius: 6px;
+}
+
+.tile {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  line-height: 1;
+  color: #0f172a;
+}
+
+.tileWall {
+  background: #1e293b;
+}
+
+.tileFloor {
+  background: #cbd5e1;
+}
+
+.tileCorridor {
+  background: #64748b;
+}
+
+.tileEntrance {
+  background: #4ade80;
+  font-weight: 700;
+}
+
+.tileExit {
+  background: #f87171;
+  font-weight: 700;
+}
+
+.itemMarker {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #facc15;
+  border: 1px solid #a16207;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 0.8rem;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendSwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.lootSection {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.lootHeader {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.lootActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.slotList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.slot {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 6px;
+  padding: 8px 10px;
+  min-width: 150px;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slotSealed {
+  background: rgba(30, 41, 59, 0.06);
+}
+
+.slotTitle {
+  font-weight: 600;
+}
+
+.slotCommitment {
+  font-family: monospace;
+  opacity: 0.7;
+  word-break: break-all;
+}
+
+.verifiedBadge {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.failedBadge {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin: 8px 0;
+}
+
+.hint {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin: 4px 0 12px;
+}

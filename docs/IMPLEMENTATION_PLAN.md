@@ -38,8 +38,8 @@ New known bugs surfaced by 1a (deferred, marked with test.skip + TODO in vrf.ser
 
 ## Phase 3: backlog (not scheduled)
 
-- [ ] Replace remaining `alert()` calls with UI feedback (carried from ROADMAP.md)
-- [ ] Dungeon layout generator from `SHA-256(tx_hash)` per the architecture doc
+- [x] Replace remaining `alert()` calls with UI feedback (carried from ROADMAP.md). Done: added a Toast system (notifications store + ToastContainer) and an inline cancel confirmation in TradeInterface; no alert() or window.confirm remain in src/.
+- [x] Dungeon layout generator from `SHA-256(tx_hash)` per the architecture doc (implemented in `src/services/dungeon/dungeon.service.ts`: public `layout_seed = SHA-256(tx_hash)`, `item_count = (seed[31] % MAX_ITEMS) + 1`, seeded sfc32 PRNG, rooms + L corridors + entrance/exit + per-slot item spots on a 40x25 grid; Dungeon Demo tab ties the public layout to sealed loot via `useSealedLoot`; tests in `src/services/dungeon/__tests__/` plus harness determinism/reachability checks)
 - [ ] On-chain contracts: key registration, explore tx, trade settlement
 
 ## Constraints

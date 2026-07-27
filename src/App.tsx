@@ -5,7 +5,9 @@ import { LootGenerator } from './components/features/loot-generator/LootGenerato
 import { TradingSystem } from './components/features/trading/TradingSystem';
 import { OnlineTradingDemo } from './components/features/online-trading/OnlineTradingDemo';
 import { DeterministicTradeDemo } from './components/features/deterministic-trade/DeterministicTradeDemo';
+import { DungeonDemo } from './components/features/dungeon/DungeonDemo';
 import { PlayerSession } from './components/layout/PlayerSession';
+import { ToastContainer } from './components/ui/Toast/Toast';
 import './styles/globals.css';
 
 interface Tab {
@@ -23,6 +25,7 @@ function App() {
   const tabs: Tab[] = [
     { id: 'vrf', label: 'VRF Testing', component: VRFTesting },
     { id: 'loot', label: 'Loot Generator', component: LootGenerator },
+    { id: 'dungeon', label: 'Dungeon Demo', component: DungeonDemo },
     { id: 'trade-demo', label: 'Trade Demo', component: DeterministicTradeDemo },
     { id: 'trading', label: 'Trading System', component: OnlineTradingDemo }
   ];
@@ -52,6 +55,7 @@ function App() {
         <PlayerSession />
         <ActiveComponent />
       </main>
+      <ToastContainer />
     </div>
   );
 }
