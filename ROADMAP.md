@@ -34,9 +34,9 @@ _Status: active · updated 2026-05-30_
 - [x] Real-time cross-browser player lists and trade coordination
 
 ## Polish & Hardening
-- [ ] Proper error handling — replace remaining alert() calls with UI feedback
-- [ ] Unit tests for trading services and components
-- [ ] VRF service crypto tests (blocked by Jest/crypto library compatibility)
+- [x] Proper error handling — replace remaining alert() calls with UI feedback (toast notification system; no alert()/confirm() calls remain)
+- [ ] Unit tests for trading services and components (services are now covered: commit-reveal and sealed-trading suites; component tests still missing)
+- [x] VRF service crypto tests (blocker resolved; suites run real crypto, including RFC 9381 test-vector validation)
 
 ## Backlog
 

@@ -10,7 +10,7 @@ The application has been refactored into a modern, clean architecture using **Re
 
 For more details on how the VRF works and why it's used, check out the [VRF Explanation](./VRF.md).
 
-The VRF code in this project is based upon the VRF library found in Google's Key Transparency GitHub repository. The translation from Go to JS was performed by ChatGPT.
+The VRF is an implementation of ECVRF-EDWARDS25519-SHA512-TAI per [RFC 9381](https://www.rfc-editor.org/rfc/rfc9381), built on @noble/curves and validated against the official RFC test vectors. (Earlier versions used a port of the VRF from Google's Key Transparency repository, translated from Go to JS by ChatGPT.)
 
 ## Features
 
@@ -21,6 +21,7 @@ The VRF code in this project is based upon the VRF library found in Google's Key
 - **Component-Based UI**: Built with reusable React components and styled with CSS Modules.
 - **Cryptographically Secure Trade Protocol**: Implements a Commit-Reveal scheme to prevent trade tampering and front-running.
 - **Sealed Loot with Selective Reveal**: generate loot in a sealed state that publishes only per-item commitments (no VRF outputs, proofs, or properties), then reveal and verify items one at a time against the public manifest.
+- **Deterministic Dungeon Demo**: a public dungeon layout derived from `SHA-256(tx_hash)` (rooms, corridors, item spots), tied to sealed loot generation for exactly the derived item count, demonstrating the public-layout / private-loot split.
 - **Deterministic Educational Demo**: a visual guide to the cryptographic steps involved in a secure trade.
 
 ## Installation
@@ -65,15 +66,29 @@ The server will be running on port `3001`.
 
 ## Usage
 
-After starting both the client and server, open `http://localhost:3000` in your browser. The application is organized into four tabs:
+After starting both the client and server, open `http://localhost:3000` in your browser. The application is organized into five tabs:
 
 1.  **VRF Testing**: Test the core VRF functionality by generating key pairs, computing VRF outputs, and verifying proofs.
-2.  **Loot Generator**: Generate a specified number of loot items using the VRF.
-3.  **Trade Demo**: A deterministic, step-by-step walkthrough of the commit-reveal trade protocol with real VRF verification, intended for learning and debugging.
-4.  **Trading System**: Join a trading room and securely trade items with another player in real-time over WebSockets.
+2.  **Loot Generator**: Generate a specified number of loot items using the VRF, in transparent mode (everything visible immediately) or sealed mode (commitments first, selective reveal).
+3.  **Dungeon Demo**: Derive a deterministic public dungeon layout from a tx_hash and generate sealed loot for its item slots.
+4.  **Trade Demo**: A deterministic, step-by-step walkthrough of the commit-reveal trade protocol with real VRF verification, intended for learning and debugging.
+5.  **Trading System**: Join a trading room and securely trade items with another player in real-time over WebSockets.
 
 ![Section 1 Screenshot](screenshots/v2/Screenshot_20251226_195012_section1_v2.png)
 ![Section 2 Screenshot](screenshots/v2/Screenshot_20251226_195053_section2_v2.png)
+
+## Testing
+
+```bash
+# Unit and integration tests (react-scripts / Jest)
+npm test
+
+# Headless end-to-end crypto harness (CI-friendly, nonzero exit on failure)
+npm run harness
+
+# Scripted two-client trade simulation (requires the server running)
+npm run trade-sim
+```
 
 ## Project Structure
 
