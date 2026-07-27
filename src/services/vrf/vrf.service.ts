@@ -94,6 +94,36 @@ export class VRFService {
   }
 
   /**
+   * Check whether a value is a well-formed keypair for the current ed25519
+   * VRF: both keys must be 64-character hex strings and the public key must
+   * be the one derived from the private key. Stale keypairs from the earlier
+   * P-256 construction (130-character uncompressed public keys) fail this
+   * check and should be discarded rather than used, since every VRF
+   * operation would otherwise throw on them.
+   * @param value - Candidate keypair (any shape; never throws)
+   */
+  static isValidKeyPair(value: unknown): value is VRFKeyPair {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+    const { privateKey, publicKey } = value as { privateKey?: unknown; publicKey?: unknown };
+    const hex64 = /^[0-9a-fA-F]{64}$/;
+    if (
+      typeof privateKey !== 'string' ||
+      typeof publicKey !== 'string' ||
+      !hex64.test(privateKey) ||
+      !hex64.test(publicKey)
+    ) {
+      return false;
+    }
+    try {
+      return VRFService.getPublicKeyFromPrivate(privateKey).toLowerCase() === publicKey.toLowerCase();
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Evaluate the VRF for a given private key and message.
    * @param privateKey - Private key (64-char hex string)
    * @param message - Message to evaluate VRF for (non-empty)

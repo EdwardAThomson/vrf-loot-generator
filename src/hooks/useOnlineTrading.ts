@@ -69,6 +69,13 @@ export const useOnlineTrading = () => {
   // Get player ID - use currentPlayer.id if available, otherwise fall back to playerName
   const playerId = currentPlayer?.id || playerName;
 
+  // Keep the latest player id in a ref so the socket event handlers below can
+  // always read the current value without forcing the listener effect to
+  // resubscribe (and re-register socket handlers) whenever the player
+  // identity changes.
+  const playerIdRef = useRef(playerId);
+  playerIdRef.current = playerId;
+
   // Trading methods
   const initiateTrade = useCallback((targetPlayerId: string, offeredItems: LootItem[]) => {
     if (!socketService.isConnected) {
@@ -80,7 +87,7 @@ export const useOnlineTrading = () => {
     setState(prev => ({ ...prev, isTrading: true, tradeError: null }));
     addLogEntry(`📤 Initiating trade with ${targetPlayerId}`, 'info');
     addLogEntry(`  Offering ${offeredItems.length} items`, 'info');
-  }, []);
+  }, [addLogEntry]);
 
   const commitToTrade = useCallback((tradeId: string, commitment: string) => {
     if (!socketService.isConnected) {
@@ -91,7 +98,7 @@ export const useOnlineTrading = () => {
     socketService.commitTrade(tradeId, commitment);
     addLogEntry(`🔒 Committing to trade ${tradeId.substring(0, 8)}...`, 'info');
     addLogEntry(`  Commitment: ${commitment.substring(0, 20)}...`, 'info');
-  }, []);
+  }, [addLogEntry]);
 
   const revealTrade = useCallback((tradeId: string, nonce: string, items: LootItem[]) => {
     if (!socketService.isConnected) {
@@ -103,7 +110,7 @@ export const useOnlineTrading = () => {
     addLogEntry(`🔓 Revealing items for trade ${tradeId.substring(0, 8)}...`, 'info');
     addLogEntry(`  Nonce: ${nonce}`, 'info');
     addLogEntry(`  Items: ${items.map(i => i.name).join(', ')}`, 'info');
-  }, []);
+  }, [addLogEntry]);
 
   const acceptTrade = useCallback((tradeId: string) => {
     if (!socketService.isConnected) {
@@ -113,7 +120,7 @@ export const useOnlineTrading = () => {
 
     socketService.acceptTrade(tradeId);
     addLogEntry(`✅ Accepting trade ${tradeId.substring(0, 8)}...`, 'info');
-  }, []);
+  }, [addLogEntry]);
 
   const cancelTrade = useCallback((tradeId: string) => {
     if (!socketService.isConnected) {
@@ -152,6 +159,7 @@ export const useOnlineTrading = () => {
 
     // Trade initiated
     const onTradeInitiated = (trade: TradeSession) => {
+      const playerId = playerIdRef.current;
       // Add to log
       const timestamp = new Date().toLocaleTimeString();
       const logEntry = { timestamp, message: `📤 Trade initiated: ${trade.id.substring(0, 8)}...`, type: 'info' as const };
@@ -212,7 +220,7 @@ export const useOnlineTrading = () => {
     // Trade committed
     const onTradeCommitted = ({ tradeId, playerId: committingPlayerId, commitment }: { tradeId: string, playerId: string, commitment?: string }) => {
       const timestamp = new Date().toLocaleTimeString();
-      const isUs = committingPlayerId === playerId;
+      const isUs = committingPlayerId === playerIdRef.current;
 
       // Track who has committed using sessionStorage
       if (isUs) {
@@ -285,6 +293,7 @@ export const useOnlineTrading = () => {
       items: LootItem[],
       nonce?: string
     }) => {
+      const playerId = playerIdRef.current;
       const timestamp = new Date().toLocaleTimeString();
       const isUs = revealingPlayerId === playerId;
 
@@ -376,7 +385,7 @@ export const useOnlineTrading = () => {
       sessionStorage.removeItem(`trade_their_committed_${trade.id}`);
 
       // Determine which items we're giving and receiving
-      const isInitiator = trade.initiatorId === playerId;
+      const isInitiator = trade.initiatorId === playerIdRef.current;
       const itemsToRemove = isInitiator ? trade.initiatorItems : trade.targetItems;
       const itemsToReceive = isInitiator ? trade.targetItems : trade.initiatorItems;
 
@@ -547,7 +556,12 @@ export const useOnlineTrading = () => {
         socketService.off(event, callback);
       });
     };
-  }, []);
+    // These deps are all referentially stable: commitToTrade, revealTrade and
+    // acceptTrade are useCallbacks whose only dep (addLogEntry) never changes,
+    // and addItems/removeItem are Zustand store actions. The mutable player id
+    // is read through playerIdRef instead, so the socket listeners are
+    // attached once and never resubscribed mid-trade.
+  }, [acceptTrade, addItems, commitToTrade, removeItem, revealTrade]);
 
   // Clear error after some time
   useEffect(() => {

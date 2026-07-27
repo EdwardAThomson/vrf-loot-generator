@@ -10,5 +10,8 @@
     "sourceMap": false,
     "declaration": false
   },
-  "include": ["src/scripts/headless-harness.ts"]
+  "include": [
+    "src/scripts/headless-harness.ts",
+    "src/scripts/test-trade-simulation.ts"
+  ]
 }

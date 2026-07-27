@@ -3,7 +3,7 @@ import { devtools } from 'zustand/middleware';
 import { TradingStoreState, TradingStoreActions, TradeRequest, Player, TradePhase } from '../types/trading.types';
 import { LootItem } from '../types/loot.types';
 import { TradingService } from '../services/trading/trading.service';
-import { CommitRevealService, TradeCommitment, Commitment, Reveal } from '../services/trading/commit-reveal.service';
+import { CommitRevealService, Commitment, Reveal } from '../services/trading/commit-reveal.service';
 
 type TradingStore = TradingStoreState & TradingStoreActions;
 

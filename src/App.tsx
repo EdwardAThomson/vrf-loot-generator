@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { VRFTesting } from './components/features/vrf-testing/VRFTesting';
 import { LootGenerator } from './components/features/loot-generator/LootGenerator';
-import { TradingSystem } from './components/features/trading/TradingSystem';
 import { OnlineTradingDemo } from './components/features/online-trading/OnlineTradingDemo';
 import { DeterministicTradeDemo } from './components/features/deterministic-trade/DeterministicTradeDemo';
 import { DungeonDemo } from './components/features/dungeon/DungeonDemo';

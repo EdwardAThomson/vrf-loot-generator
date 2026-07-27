@@ -1,11 +1,9 @@
 import { io, Socket } from 'socket.io-client';
-import { 
-  ServerToClientEvents, 
-  ClientToServerEvents, 
-  Player, 
-  TradingRoom, 
+import {
+  Player,
+  TradingRoom,
   TradeSession,
-  LootItem 
+  LootItem
 } from '../../types/websocket.types';
 
 export class SocketService {

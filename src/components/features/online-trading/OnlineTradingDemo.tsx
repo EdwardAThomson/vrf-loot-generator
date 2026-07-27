@@ -54,9 +54,7 @@ export const OnlineTradingDemo: React.FC = () => {
     tradeLog,
     verificationResults,
     initiateTrade,
-    acceptTrade,
     commitToTrade,
-    revealTrade,
     cancelTrade,
     clearTradeLog,
     hasActiveTrades,
@@ -233,8 +231,6 @@ export const OnlineTradingDemo: React.FC = () => {
       initiateTrade(tradeTargetPlayer, tradeItems);
       
       // Store items for later commit/reveal when Player 2 responds
-      // We'll use a temporary ID and update it when we get the real trade ID
-      const tempId = `temp-${Date.now()}`;
       sessionStorage.setItem(`pending_trade_items`, JSON.stringify(tradeItems));
       
       setShowTradeModal(false);

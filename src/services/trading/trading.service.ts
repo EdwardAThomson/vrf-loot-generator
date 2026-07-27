@@ -1,6 +1,5 @@
 // Trading Service - Business logic for secure item trading
 import { LootService } from '../loot/loot.service';
-import { VRFService } from '../vrf/vrf.service';
 import { CommitRevealService, TradeCommitment, Commitment, Reveal } from './commit-reveal.service';
 import { LootItem } from '../../types/loot.types';
 import { TradeRequest, Player } from '../../types/trading.types';

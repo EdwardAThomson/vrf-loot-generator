@@ -178,6 +178,26 @@ function main(): void {
     );
   });
 
+  check('Item with tampered claimed properties rejected (fraud scenario)', () => {
+    // A fraudster keeps the valid VRF data but claims better properties.
+    // verifyItem must regenerate the item from the VRF output and reject the
+    // mismatch, and the trading path must refuse to include such an item.
+    const source = items[0];
+    const fakeRarity = source.rarity === 'Legendary' ? 'Common' : 'Legendary';
+    const fake: LootItem = {
+      ...source,
+      name: 'Legendary Dragon Sword',
+      rarity: fakeRarity,
+      modifier: 'Dragon'
+    };
+    assert(
+      !LootService.verifyItem(fake, keyPair.publicKey),
+      'item with tampered claimed properties passed verification'
+    );
+    const validation = TradingService.validateTradeItems([fake], keyPair.publicKey);
+    assert(!validation.isValid, 'tampered item passed trade validation');
+  });
+
   // ---- 5. Commit-reveal trade round trip ---------------------------------
   check('Commit-reveal trade round trip', () => {
     const alice = VRFService.generateKeyPair();

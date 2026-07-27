@@ -7,13 +7,12 @@ export const PlayerSession: React.FC = () => {
   const [inputName, setInputName] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   
-  const { 
-    playerName, 
-    isLoggedIn, 
-    currentPlayer,
-    login, 
-    logout, 
-    setCurrentPlayer 
+  const {
+    playerName,
+    isLoggedIn,
+    login,
+    logout,
+    setCurrentPlayer
   } = usePlayerStore();
 
   const { 
@@ -35,7 +34,10 @@ export const PlayerSession: React.FC = () => {
           setIsConnecting(false);
         });
     }
-  }, [isLoggedIn, playerName, isConnected, isConnecting]); // Removed 'connect' from dependencies
+    // Including 'connect' is safe: when its identity changes mid-connection
+    // the guard above (isConnected / local isConnecting) prevents a second
+    // connect attempt.
+  }, [isLoggedIn, playerName, isConnected, isConnecting, connect]);
 
   const handleLogin = async () => {
     if (!inputName.trim()) return;

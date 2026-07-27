@@ -168,7 +168,9 @@ export const useWebSocket = () => {
         socketService.off(event, callback);
       });
     };
-  }, []);
+    // setCurrentPlayer is a Zustand store action, so its identity is stable
+    // across renders and this effect still runs only once on mount.
+  }, [setCurrentPlayer]);
 
   // Auto-refresh lists when connected (only once)
   useEffect(() => {

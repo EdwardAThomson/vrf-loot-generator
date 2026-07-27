@@ -80,7 +80,7 @@ export const useVRF = () => {
     } finally {
       setGenerating(false);
     }
-  }, [setGenerating, setStoreError, setVRFResult]);
+  }, [setGenerating, setStoreError, setVRFResult, keyPair]);
 
   // Verify VRF proof
   const verifyVRF = useCallback(async (publicKeyHex: string, proofInput: string, message: string, expectedVrfOutputHex: string): Promise<boolean> => {
