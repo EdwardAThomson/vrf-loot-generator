@@ -6,6 +6,7 @@ import { LootItem } from '../../../types/loot.types';
 import { LootItem as WebSocketLootItem } from '../../../types/websocket.types';
 import { LootItem as LootItemComponent } from '../loot-generator/LootItem';
 import { socketService } from '../../../services/websocket/socket.service';
+import { CommitRevealService } from '../../../services/trading/commit-reveal.service';
 import styles from './OnlineTradingDemo.module.css';
 
 interface RoomPlayer {
@@ -212,7 +213,9 @@ export const OnlineTradingDemo: React.FC = () => {
             publicKey: item.vrfData.publicKey,
             proof: proofString,
             message: item.vrfData.message,
-            hash: vrfOutputString
+            hash: vrfOutputString,
+            blockhash: item.vrfData.blockhash,
+            itemIndex: item.vrfData.itemIndex
           } : {
             publicKey: '',
             proof: '',
@@ -313,7 +316,9 @@ export const OnlineTradingDemo: React.FC = () => {
             publicKey: item.vrfData.publicKey,
             proof: proofString,
             message: item.vrfData.message,
-            hash: vrfOutputString
+            hash: vrfOutputString,
+            blockhash: item.vrfData.blockhash,
+            itemIndex: item.vrfData.itemIndex
           } : {
             publicKey: '',
             proof: '',
@@ -323,11 +328,10 @@ export const OnlineTradingDemo: React.FC = () => {
         };
       });
       
-      // Send counter-offer by committing to trade
+      // Send counter-offer by committing to trade (canonical commitment hash)
       const itemsString = JSON.stringify(tradeItems);
-      const CryptoJS = require('crypto-js');
-      const nonce = Math.random().toString(36).substring(2, 15);
-      const commitment = CryptoJS.SHA256(itemsString + nonce).toString();
+      const nonce = CommitRevealService.generateNonce();
+      const commitment = CommitRevealService.computeCommitmentHash(tradeItems, nonce);
       
       // Store nonce and items for later reveal
       sessionStorage.setItem(`trade_nonce_${acceptingTradeId}`, nonce);

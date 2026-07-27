@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "noCheck": true,
+    "module": "commonjs",
+    "isolatedModules": false,
+    "outDir": "harness-build",
+    "rootDir": "src",
+    "sourceMap": false,
+    "declaration": false
+  },
+  "include": ["src/scripts/headless-harness.ts"]
+}

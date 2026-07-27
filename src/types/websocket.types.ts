@@ -20,6 +20,8 @@ export interface LootItem {
     proof: string;
     message: string;
     hash: string;
+    blockhash?: string;
+    itemIndex?: number;
   };
 }
 

@@ -9,9 +9,9 @@
 import { VRFService } from '../../../services/vrf/vrf.service';
 import { LootService } from '../../../services/loot/loot.service';
 
-// REAL VRF private keys (generated using elliptic curve cryptography)
+// REAL VRF private keys (32-byte ed25519 secret keys, hex encoded)
 // These are fixed for demo reproducibility but are cryptographically valid
-// Generated using: elliptic.ec('p256').genKeyPair()
+// for the RFC 9381 ECVRF-EDWARDS25519-SHA512-TAI suite used by VRFService
 const ALICE_PRIVATE_KEY = '5d0247d9e4e1ece46a703365875d4c80355781f4ea632e0e703fc7537ceab0cb';
 const BOB_PRIVATE_KEY = 'df9a386c02ebc0df405cc256057b8886fdfa0fcd55b04409870fa6aa3b56a3ad';
 
@@ -37,6 +37,8 @@ export interface DemoItem {
     proof: string;
     message: string;
     hash: string;
+    blockhash: string;
+    itemIndex: number;
   };
 }
 
@@ -62,7 +64,7 @@ export function generateAliceData(): { player: DemoPlayer; items: DemoItem[] } {
   );
   
   // Convert to demo format
-  const items: DemoItem[] = lootItems.map(item => {
+  const items: DemoItem[] = lootItems.map((item, itemIdx) => {
     // Convert Uint8Array to hex string for proof
     let proofString = '';
     if (item.vrfData?.proof) {
@@ -74,7 +76,7 @@ export function generateAliceData(): { player: DemoPlayer; items: DemoItem[] } {
           .join('');
       }
     }
-    
+
     // Convert Uint8Array to hex string for vrfOutput
     let vrfOutputString = '';
     if (item.vrfData?.vrfOutput) {
@@ -86,7 +88,7 @@ export function generateAliceData(): { player: DemoPlayer; items: DemoItem[] } {
           .join('');
       }
     }
-    
+
     return {
       id: item.id,
       name: item.name,
@@ -97,11 +99,13 @@ export function generateAliceData(): { player: DemoPlayer; items: DemoItem[] } {
         publicKey: item.vrfData?.publicKey || publicKey,
         proof: proofString,
         message: item.vrfData?.message || '',
-        hash: vrfOutputString
+        hash: vrfOutputString,
+        blockhash: item.vrfData?.blockhash || ALICE_BLOCKHASH,
+        itemIndex: item.vrfData?.itemIndex ?? itemIdx
       }
     };
   });
-  
+
   return { player, items };
 }
 
@@ -127,7 +131,7 @@ export function generateBobData(): { player: DemoPlayer; items: DemoItem[] } {
   );
   
   // Convert to demo format
-  const items: DemoItem[] = lootItems.map(item => {
+  const items: DemoItem[] = lootItems.map((item, itemIdx) => {
     // Convert Uint8Array to hex string for proof
     let proofString = '';
     if (item.vrfData?.proof) {
@@ -162,11 +166,13 @@ export function generateBobData(): { player: DemoPlayer; items: DemoItem[] } {
         publicKey: item.vrfData?.publicKey || publicKey,
         proof: proofString,
         message: item.vrfData?.message || '',
-        hash: vrfOutputString
+        hash: vrfOutputString,
+        blockhash: item.vrfData?.blockhash || BOB_BLOCKHASH,
+        itemIndex: item.vrfData?.itemIndex ?? itemIdx
       }
     };
   });
-  
+
   return { player, items };
 }
 
@@ -188,7 +194,9 @@ export function verifyDemoItem(item: DemoItem, publicKey: string): boolean {
         publicKey: item.vrfProof.publicKey,
         proof: item.vrfProof.proof,
         message: item.vrfProof.message,
-        vrfOutput: item.vrfProof.hash
+        vrfOutput: item.vrfProof.hash,
+        blockhash: item.vrfProof.blockhash,
+        itemIndex: item.vrfProof.itemIndex
       }
     };
     

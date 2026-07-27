@@ -20,6 +20,7 @@ The VRF code in this project is based upon the VRF library found in Google's Key
 - **Clean Architecture**: Separates concerns with a React/TypeScript frontend, custom hooks for logic, Zustand for state management, and a dedicated backend server.
 - **Component-Based UI**: Built with reusable React components and styled with CSS Modules.
 - **Cryptographically Secure Trade Protocol**: Implements a Commit-Reveal scheme to prevent trade tampering and front-running.
+- **Sealed Loot with Selective Reveal**: generate loot in a sealed state that publishes only per-item commitments (no VRF outputs, proofs, or properties), then reveal and verify items one at a time against the public manifest.
 - **Deterministic Educational Demo**: a visual guide to the cryptographic steps involved in a secure trade.
 
 ## Installation

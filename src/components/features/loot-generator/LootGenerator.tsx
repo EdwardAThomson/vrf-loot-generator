@@ -2,12 +2,16 @@
 import React, { useState, ChangeEvent } from 'react';
 import { useVRF } from '../../../hooks/useVRF';
 import { useLootGeneration } from '../../../hooks/useLootGeneration';
+import { useSealedLoot } from '../../../hooks/useSealedLoot';
 import { Card } from '../../ui/Card/Card';
 import { Button } from '../../ui/Button/Button';
 import { Input } from '../../ui/Input/Input';
 import { LootDisplay } from './LootDisplay';
 import { LootStats } from './LootStats';
+import { SealedLootDisplay } from './SealedLootDisplay';
 import { LOOT_CONSTANTS } from '../../../constants/loot.constants';
+
+type GenerationMode = 'transparent' | 'sealed';
 
 /**
  * Loot Generator tab component - pure UI logic
@@ -24,10 +28,23 @@ export const LootGenerator: React.FC = () => {
     getRarityStats 
   } = useLootGeneration();
 
+  const {
+    sealedManifest,
+    sealedRecords,
+    verifiedReveals,
+    isLoading: sealedLoading,
+    error: sealedError,
+    generateSealedLoot,
+    reveal,
+    clearSealed,
+    clearError: clearSealedError,
+  } = useSealedLoot();
+
   const [blockhash, setBlockhash] = useState('');
   const [itemCount, setItemCount] = useState(LOOT_CONSTANTS.LIMITS.DEFAULT_ITEMS);
+  const [mode, setMode] = useState<GenerationMode>('transparent');
 
-  const isLoading = vrfLoading || lootLoading;
+  const isLoading = vrfLoading || lootLoading || sealedLoading;
 
   const handleGenerateKeys = async () => {
     try {
@@ -43,7 +60,11 @@ export const LootGenerator: React.FC = () => {
     }
 
     try {
-      await generateLoot(keyPair.privateKey, blockhash, itemCount);
+      if (mode === 'sealed') {
+        await generateSealedLoot(keyPair.privateKey, blockhash, itemCount);
+      } else {
+        await generateLoot(keyPair.privateKey, blockhash, itemCount);
+      }
     } catch (err) {
       // Error handled by hook
     }
@@ -68,10 +89,24 @@ export const LootGenerator: React.FC = () => {
         {error && (
           <div className="alert alert-danger">
             <strong>Error:</strong> {error}
-            <Button 
-              variant="secondary" 
-              size="sm" 
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={clearError}
+              className="ml-2"
+            >
+              Dismiss
+            </Button>
+          </div>
+        )}
+
+        {sealedError && (
+          <div className="alert alert-danger">
+            <strong>Error:</strong> {sealedError}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={clearSealedError}
               className="ml-2"
             >
               Dismiss
@@ -131,16 +166,51 @@ export const LootGenerator: React.FC = () => {
 
           <div>
             <h3 className="mb-3">Generation</h3>
-            
+
+            <div className="mb-3">
+              <div className="btn-group">
+                <Button
+                  variant={mode === 'transparent' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setMode('transparent')}
+                >
+                  Transparent
+                </Button>
+                <Button
+                  variant={mode === 'sealed' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setMode('sealed')}
+                >
+                  Sealed
+                </Button>
+              </div>
+              <p className="text-muted mt-2">
+                {mode === 'sealed'
+                  ? 'Sealed mode publishes only per-item commitments; VRF outputs and proofs stay local until you reveal each item.'
+                  : 'Transparent mode shows items and their VRF data immediately (educational demo).'}
+              </p>
+            </div>
+
             <Button
               onClick={handleGenerateLoot}
-              loading={lootLoading}
+              loading={lootLoading || sealedLoading}
               disabled={!canGenerateLoot}
               size="lg"
               className="mb-3"
             >
-              Generate {itemCount} Loot Item{itemCount !== 1 ? 's' : ''}
+              Generate {itemCount} {mode === 'sealed' ? 'Sealed' : 'Loot'} Item{itemCount !== 1 ? 's' : ''}
             </Button>
+
+            {mode === 'sealed' && sealedRecords.length > 0 && (
+              <Button
+                variant="secondary"
+                onClick={clearSealed}
+                disabled={isLoading}
+                className="mb-3"
+              >
+                Clear Sealed Batch
+              </Button>
+            )}
 
             {generatedItems.length > 0 && (
               <div>
@@ -158,6 +228,16 @@ export const LootGenerator: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Sealed Batch Display (face-down commitments, per-item reveal) */}
+        {sealedManifest && sealedRecords.length > 0 && (
+          <SealedLootDisplay
+            manifest={sealedManifest}
+            records={sealedRecords}
+            verifiedReveals={verifiedReveals}
+            onReveal={reveal}
+          />
+        )}
 
         {/* Generated Items Display */}
         {generatedItems.length > 0 && (

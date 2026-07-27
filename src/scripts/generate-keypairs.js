@@ -1,22 +1,25 @@
 // Temporary script to generate real VRF keypairs
-const elliptic = require('elliptic');
-const EC = new elliptic.ec('p256');
+// (RFC 9381 ECVRF-EDWARDS25519-SHA512-TAI: 32-byte secret and public keys)
+const crypto = require('crypto');
+const { ed25519 } = require('@noble/curves/ed25519');
 
-// Generate Alice's keypair
-const aliceKeyPair = EC.genKeyPair();
-const alicePrivateKey = aliceKeyPair.getPrivate('hex');
-const alicePublicKey = aliceKeyPair.getPublic('hex');
+function generate() {
+  const secretKey = crypto.randomBytes(32);
+  const publicKey = Buffer.from(ed25519.getPublicKey(secretKey));
+  return {
+    privateKey: secretKey.toString('hex'),
+    publicKey: publicKey.toString('hex'),
+  };
+}
 
-// Generate Bob's keypair
-const bobKeyPair = EC.genKeyPair();
-const bobPrivateKey = bobKeyPair.getPrivate('hex');
-const bobPublicKey = bobKeyPair.getPublic('hex');
+const alice = generate();
+const bob = generate();
 
 console.log('// Real VRF Keypairs Generated');
 console.log('// Alice:');
-console.log(`const ALICE_PRIVATE_KEY = '${alicePrivateKey}';`);
-console.log(`const ALICE_PUBLIC_KEY = '${alicePublicKey}';`);
+console.log(`const ALICE_PRIVATE_KEY = '${alice.privateKey}';`);
+console.log(`const ALICE_PUBLIC_KEY = '${alice.publicKey}';`);
 console.log('');
 console.log('// Bob:');
-console.log(`const BOB_PRIVATE_KEY = '${bobPrivateKey}';`);
-console.log(`const BOB_PUBLIC_KEY = '${bobPublicKey}';`);
+console.log(`const BOB_PRIVATE_KEY = '${bob.privateKey}';`);
+console.log(`const BOB_PUBLIC_KEY = '${bob.publicKey}';`);

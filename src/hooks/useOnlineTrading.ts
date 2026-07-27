@@ -7,6 +7,7 @@ import {
 import useInventoryStore from '../store/inventory.store';
 import { usePlayerStore } from '../store/player.store';
 import { LootService } from '../services/loot/loot.service';
+import { CommitRevealService } from '../services/trading/commit-reveal.service';
 
 interface TradeLogEntry {
   timestamp: string;
@@ -170,10 +171,11 @@ export const useOnlineTrading = () => {
           if (storedItems) {
             const items = JSON.parse(storedItems);
 
-            const CryptoJS = require('crypto-js');
-            const nonce = Math.random().toString(36).substring(2, 15);
+            const nonce = CommitRevealService.generateNonce();
             const itemsString = JSON.stringify(items);
-            const commitment = CryptoJS.SHA256(itemsString + nonce).toString();
+            // Canonical commitment: binds item identity + nonce, order-independent
+            // of JSON key layout (see CommitRevealService docs).
+            const commitment = CommitRevealService.computeCommitmentHash(items, nonce);
 
             // Store commitment for verification later
             sessionStorage.setItem(`trade_nonce_${trade.id}`, nonce);
@@ -299,16 +301,16 @@ export const useOnlineTrading = () => {
         if (!isUs && nonce) {
           const otherCommitment = sessionStorage.getItem(`trade_other_commitment_${tradeId}`);
           if (otherCommitment) {
-            const CryptoJS = require('crypto-js');
-            const itemsString = JSON.stringify(items);
-            const recomputedCommitment = CryptoJS.SHA256(itemsString + nonce).toString();
+            // Canonical recomputation: verifies even if the relay re-ordered
+            // JSON keys or display fields (icon, timestamps) differ.
+            const verified = CommitRevealService.verifyCommitmentHash(otherCommitment, items, nonce);
 
-            if (recomputedCommitment === otherCommitment) {
+            if (verified) {
               newLog.push({ timestamp, message: `  ✅ Commitment VERIFIED!`, type: 'success' as const });
             } else {
               newLog.push({ timestamp, message: `  ❌ Commitment MISMATCH! Trade may be fraudulent!`, type: 'error' as const });
               newLog.push({ timestamp, message: `    Expected: ${otherCommitment.substring(0, 20)}...`, type: 'error' as const });
-              newLog.push({ timestamp, message: `    Got: ${recomputedCommitment.substring(0, 20)}...`, type: 'error' as const });
+              newLog.push({ timestamp, message: `    Got: ${CommitRevealService.computeCommitmentHash(items, nonce).substring(0, 20)}...`, type: 'error' as const });
             }
           }
         }
@@ -417,7 +419,9 @@ export const useOnlineTrading = () => {
                 publicKey: item.vrfProof.publicKey,
                 proof: item.vrfProof.proof,
                 message: item.vrfProof.message,
-                vrfOutput: item.vrfProof.hash
+                vrfOutput: item.vrfProof.hash,
+                blockhash: item.vrfProof.blockhash,
+                itemIndex: item.vrfProof.itemIndex
               }
             },
             item.vrfProof.publicKey
@@ -441,9 +445,9 @@ export const useOnlineTrading = () => {
       // STEP 3: Add verified items to inventory
       // Convert WebSocket LootItems to inventory LootItems
       const inventoryItems = itemsToReceive.map(item => {
-        // Extract blockhash from message (format: blockhash-index)
-        const messageParts = item.vrfProof?.message ? item.vrfProof.message.split('-') : [];
-        const blockhash = messageParts.length > 1 ? messageParts.slice(0, -1).join('-') : undefined;
+        // Blockhash and item index travel explicitly on the proof payload
+        // (the message is a hex encoding of blockhash bytes || uint32 index)
+        const blockhash = item.vrfProof?.blockhash;
 
         return {
           name: item.name,
@@ -457,7 +461,8 @@ export const useOnlineTrading = () => {
             proof: item.vrfProof.proof,
             message: item.vrfProof.message,
             vrfOutput: item.vrfProof.hash,
-            blockhash: blockhash
+            blockhash: blockhash,
+            itemIndex: item.vrfProof.itemIndex
           } : undefined
         };
       });

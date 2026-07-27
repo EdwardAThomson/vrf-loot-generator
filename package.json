@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@noble/curves": "^1.9.7",
+    "@noble/hashes": "^1.8.0",
     "bn.js": "^5.2.2",
     "crypto-js": "^4.2.0",
     "elliptic": "^6.5.7",
@@ -19,6 +21,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "harness": "tsc -p tsconfig.harness.json && node harness-build/scripts/headless-harness.js",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

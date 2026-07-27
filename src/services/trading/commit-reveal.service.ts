@@ -1,24 +1,99 @@
 // Commit-Reveal Protocol Service
 // Implements cryptographic commit-reveal for secure trading
+//
+// Commitment format (COMMIT_SCHEMA_VERSION = 1):
+//
+//   hash = sha256( canonicalize({ v, items, nonce }) )
+//
+// where `canonicalize` is the deterministic encoder in src/utils/canonical.ts
+// (sorted keys, one canonical form per value), `v` is the schema version
+// number (so future format changes fail verification instead of silently
+// verifying), `nonce` is the committer's random hex nonce, and `items` is the
+// array of extracted item IDENTITIES (see CommittedItem below), in offer order.
+//
+// The commitment binds item identity, not the whole mutable LootItem object.
+// Committed fields per item: id, name, type, rarity, modifier, and the VRF
+// identity fields blockhash / itemIndex / vrfOutput / proof (bytes as
+// lowercase hex, treated as opaque data of unspecified length). Display-only
+// or client-local fields (icon, createdAt, vrfData.publicKey/message/index)
+// deliberately do NOT affect the hash: honest peers may render or timestamp
+// the same item differently, and that must not break verification.
+//
+// Timestamps are metadata only. They are NOT part of the hashed payload and
+// verifyReveal ignores them entirely, so an honest late reveal (minutes after
+// the commit) still verifies. Freshness policy is a separate concern, handled
+// by isCommitmentValid.
 
 import * as sha256 from 'js-sha256';
 import * as crypto from 'crypto-js';
 import { LootItem } from '../../types/loot.types';
+import { canonicalize } from '../../utils/canonical';
+import { toHexString } from '../../utils/format.utils';
 
-export interface CommitmentData {
-  items: LootItem[];
-  nonce: string;
-  timestamp: number;
+/** Version of the committed payload format. Bump on any format change. */
+export const COMMIT_SCHEMA_VERSION = 1;
+
+/**
+ * VRF fields the commitment can read from an item. Structural superset of
+ * `VRFData` (loot.types, field `vrfOutput`) and the websocket wire item's
+ * `vrfProof` (field `hash`). Only the identity fields are committed.
+ */
+export interface CommittableVRFFields {
+  publicKey?: string;
+  proof?: Uint8Array | string | null;
+  message?: string;
+  blockhash?: string | null;
+  itemIndex?: number | null;
+  index?: Uint8Array | string;
+  vrfOutput?: Uint8Array | string | null;
+  /** Wire-format alias for vrfOutput (websocket LootItem.vrfProof.hash). */
+  hash?: Uint8Array | string | null;
+}
+
+/**
+ * Minimal structural item shape the commitment reads. Both the app `LootItem`
+ * (src/types/loot.types.ts) and the websocket wire `LootItem`
+ * (src/types/websocket.types.ts) satisfy it. Extra fields (icon, createdAt,
+ * ...) are ignored by extraction and never affect the hash.
+ */
+export interface CommittableItem {
+  id: string;
+  name: string;
+  type: string;
+  rarity: string;
+  modifier?: string | null;
+  vrfData?: CommittableVRFFields | null;
+  vrfProof?: CommittableVRFFields | null;
+}
+
+/** VRF identity fields bound by the commitment (bytes as lowercase hex). */
+export interface CommittedVRFIdentity {
+  blockhash: string | null;
+  itemIndex: number | null;
+  vrfOutput: string | null;
+  proof: string | null;
+}
+
+/** The exact per-item fields bound by a commitment. */
+export interface CommittedItem {
+  id: string;
+  name: string;
+  type: string;
+  rarity: string;
+  modifier: string;
+  vrfData: CommittedVRFIdentity | null;
 }
 
 export interface Commitment {
   hash: string;
+  /** Metadata only (creation time). Not part of the hash, never verified. */
   timestamp: number;
 }
 
 export interface Reveal {
   items: LootItem[];
   nonce: string;
+  /** Metadata only (reveal time). Not part of the hash, never verified. */
   timestamp: number;
 }
 
@@ -27,6 +102,13 @@ export interface TradeCommitment {
   commitment: Commitment;
   reveal?: Reveal;
 }
+
+/** Normalize an opaque bytes-or-hex-string field to lowercase hex (or null). */
+const toOpaqueHex = (value: Uint8Array | string | undefined | null): string | null => {
+  if (value === undefined || value === null) return null;
+  if (value instanceof Uint8Array) return toHexString(value);
+  return value.toLowerCase();
+};
 
 /**
  * Commit-Reveal Protocol Service
@@ -41,60 +123,87 @@ export class CommitRevealService {
   }
 
   /**
-   * Create a commitment hash for the given items and nonce
-   * @param items - Items being offered in the trade
-   * @param nonce - Random nonce for security
-   * @returns Commitment object with hash and timestamp
+   * Extract the identity fields of an item that the commitment binds.
+   * Missing optional fields normalize to null (never undefined), and byte
+   * fields normalize to lowercase hex, so semantically identical items
+   * always extract to the same CommittedItem regardless of representation.
    */
-  static createCommitment(items: LootItem[], nonce: string): Commitment {
-    const timestamp = Date.now();
-    
-    // Create deterministic representation of items for hashing
-    const itemsData = items.map(item => ({
+  static extractCommittedItem(item: CommittableItem): CommittedItem {
+    const vrf = item.vrfData ?? item.vrfProof ?? null;
+    return {
       id: item.id,
       name: item.name,
       type: item.type,
-      icon: item.icon,
       rarity: item.rarity,
-      modifier: item.modifier,
-      vrfData: item.vrfData,
-      createdAt: item.createdAt
-    }));
-
-    const commitmentData: CommitmentData = {
-      items: itemsData,
-      nonce,
-      timestamp
-    };
-
-    // Create hash of the commitment data
-    const dataString = JSON.stringify(commitmentData);
-    const hash = sha256.sha256(dataString);
-
-    return {
-      hash,
-      timestamp
+      modifier: item.modifier !== undefined && item.modifier !== null ? item.modifier : '',
+      vrfData: vrf
+        ? {
+            blockhash: vrf.blockhash !== undefined && vrf.blockhash !== null
+              ? vrf.blockhash.toLowerCase()
+              : null,
+            itemIndex: vrf.itemIndex !== undefined && vrf.itemIndex !== null
+              ? vrf.itemIndex
+              : null,
+            vrfOutput: toOpaqueHex(vrf.vrfOutput !== undefined && vrf.vrfOutput !== null ? vrf.vrfOutput : vrf.hash),
+            proof: toOpaqueHex(vrf.proof)
+          }
+        : null
     };
   }
 
   /**
-   * Verify that a reveal matches the original commitment
-   * @param commitment - Original commitment hash
+   * Compute the commitment hash for items + nonce.
+   * @param items - Items being offered in the trade
+   * @param nonce - Random nonce for security
+   * @param version - Payload schema version (exposed for testing; callers use the default)
+   * @returns Lowercase hex sha256 commitment hash
+   */
+  static computeCommitmentHash(
+    items: CommittableItem[],
+    nonce: string,
+    version: number = COMMIT_SCHEMA_VERSION
+  ): string {
+    const payload = {
+      v: version,
+      items: items.map((item) => this.extractCommittedItem(item)),
+      nonce
+    };
+    return sha256.sha256(canonicalize(payload));
+  }
+
+  /**
+   * Verify a bare commitment hash against revealed items + nonce.
+   */
+  static verifyCommitmentHash(hash: string, items: CommittableItem[], nonce: string): boolean {
+    try {
+      return this.computeCommitmentHash(items, nonce) === hash;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Create a commitment for the given items and nonce.
+   * The returned timestamp is metadata (used only by isCommitmentValid); it is
+   * not part of the committed payload.
+   */
+  static createCommitment(items: LootItem[], nonce: string): Commitment {
+    return {
+      hash: this.computeCommitmentHash(items, nonce),
+      timestamp: Date.now()
+    };
+  }
+
+  /**
+   * Verify that a reveal matches the original commitment.
+   * Only the hash binds: timestamps are ignored, so honest late reveals verify.
+   * @param commitment - Original commitment
    * @param reveal - Revealed data (items + nonce)
    * @returns True if reveal is valid, false otherwise
    */
   static verifyReveal(commitment: Commitment, reveal: Reveal): boolean {
     try {
-      // Recreate the commitment from the revealed data
-      const recreatedCommitment = this.createCommitment(reveal.items, reveal.nonce);
-      
-      // Verify hash matches
-      const hashMatches = recreatedCommitment.hash === commitment.hash;
-      
-      // Verify timestamp matches (within reasonable tolerance for clock differences)
-      const timestampMatches = Math.abs(recreatedCommitment.timestamp - commitment.timestamp) < 1000; // 1 second tolerance
-      
-      return hashMatches && timestampMatches;
+      return this.computeCommitmentHash(reveal.items, reveal.nonce) === commitment.hash;
     } catch (error) {
       return false;
     }
@@ -130,7 +239,7 @@ export class CommitRevealService {
   ): boolean {
     const player1Valid = this.verifyReveal(player1Commitment, player1Reveal);
     const player2Valid = this.verifyReveal(player2Commitment, player2Reveal);
-    
+
     return player1Valid && player2Valid;
   }
 
@@ -155,7 +264,7 @@ export class CommitRevealService {
     const sortedIds = [player1Id, player2Id].sort();
     const timestamp = Date.now();
     const nonce = this.generateNonce();
-    
+
     const sessionData = `${sortedIds[0]}-${sortedIds[1]}-${timestamp}-${nonce}`;
     return sha256.sha256(sessionData).substring(0, 16);
   }
@@ -169,7 +278,7 @@ export class CommitRevealService {
   static createTradeCommitment(playerId: string, items: LootItem[]): TradeCommitment {
     const nonce = this.generateNonce();
     const commitment = this.createCommitment(items, nonce);
-    
+
     return {
       playerId,
       commitment,

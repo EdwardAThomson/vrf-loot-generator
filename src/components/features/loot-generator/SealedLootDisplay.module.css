@@ -1,0 +1,107 @@
+.sealedDisplay {
+  border-top: 1px solid #dee2e6;
+  padding-top: var(--spacing-lg);
+}
+
+.manifestPanel {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.manifestNote {
+  color: var(--secondary-color);
+  font-size: var(--font-size-sm);
+  margin: var(--spacing-xs) 0 var(--spacing-sm) 0;
+}
+
+.manifestMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+}
+
+.manifestField code {
+  font-family: monospace;
+}
+
+.sealedGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--spacing-md);
+}
+
+/* Face-down card: dark, no properties shown */
+.sealedCard {
+  background: #2b2f36;
+  color: #e9ecef;
+  border: 1px dashed #6c757d;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  text-align: center;
+}
+
+.sealedIcon {
+  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1d2025;
+  border-radius: var(--border-radius);
+  color: #adb5bd;
+}
+
+.sealedTitle {
+  font-weight: 600;
+}
+
+.commitmentRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--font-size-sm);
+}
+
+.commitmentLabel {
+  color: #adb5bd;
+  font-weight: 500;
+}
+
+.commitmentValue {
+  font-family: monospace;
+  color: #e9ecef;
+  word-break: break-all;
+}
+
+.revealedSlot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.revealBadge {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  text-align: center;
+}
+
+.revealValid {
+  background: #d4edda;
+  color: #155724;
+}
+
+.revealInvalid {
+  background: #f8d7da;
+  color: #721c24;
+}

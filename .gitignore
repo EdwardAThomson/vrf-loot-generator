@@ -11,6 +11,9 @@
 # production
 /build
 
+# headless harness compiled output (npm run harness)
+/harness-build
+
 # misc
 .DS_Store
 .env.local

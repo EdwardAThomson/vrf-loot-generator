@@ -58,13 +58,13 @@ export const useVRF = () => {
       const result = VRFService.evaluate(privateKey, msgBuffer);
       
       // Convert arrays to hex strings for display
-      // Proof format: [s, t, vrf] where s=32 bytes, t=32 bytes, vrf=65 bytes
+      // RFC 9381 proof layout: Gamma (32 bytes) || c (16 bytes) || s (32 bytes)
       const formattedResult: VRFFormattedResult = {
         vrfOutput: toHexString(result.vrfOutput),
         proof: {
-          gamma: toHexString(result.proof.slice(64)), // VRF point (65 bytes)
-          c: toHexString(result.proof.slice(0, 32)),   // s value (32 bytes)
-          s: toHexString(result.proof.slice(32, 64))   // t value (32 bytes)
+          gamma: toHexString(result.proof.slice(0, 32)), // Gamma point (32 bytes)
+          c: toHexString(result.proof.slice(32, 48)),    // challenge c (16 bytes)
+          s: toHexString(result.proof.slice(48, 80))     // scalar s (32 bytes)
         },
         index: toHexString(result.index),
         message,
@@ -102,14 +102,13 @@ export const useVRF = () => {
       if (proofInput.includes('-')) {
         const parts = proofInput.split('-');
         if (parts.length === 3) {
-          // The display format is gamma-c-s, where:
-          // gamma = VRF point (65 bytes), c = s value (32 bytes), s = t value (32 bytes)
-          // Reconstruct original proof format: [s, t, vrf]
-          const s = fromHexString(parts[1]); // c field = s value (32 bytes)
-          const t = fromHexString(parts[2]); // s field = t value (32 bytes)  
-          const vrf = fromHexString(parts[0]); // gamma field = VRF point (65 bytes)
-          
-          proof = new Uint8Array([...s, ...t, ...vrf]);
+          // The display format is gamma-c-s, matching the RFC 9381 proof
+          // layout: Gamma (32 bytes) || c (16 bytes) || s (32 bytes)
+          const gamma = fromHexString(parts[0]); // Gamma point (32 bytes)
+          const c = fromHexString(parts[1]);     // challenge c (16 bytes)
+          const s = fromHexString(parts[2]);     // scalar s (32 bytes)
+
+          proof = new Uint8Array([...gamma, ...c, ...s]);
         } else {
           throw new Error('Invalid proof format. Expected gamma-c-s format.');
         }
@@ -117,13 +116,20 @@ export const useVRF = () => {
         // Assume it's a raw hex string
         proof = fromHexString(proofInput);
       }
-      
-      // Use proofToHash to verify and get the computed index
-      const computedIndex = VRFService.proofToHash(publicKeyHex, msgBuffer, proof);
-      const computedIndexHex = toHexString(computedIndex);
-      
-      // Compare with expected VRF output (which should be the index)
-      return computedIndexHex === expectedVrfOutputHex;
+
+      // Verify the proof (throws if invalid) and get the verified VRF output
+      // beta = proof_to_hash(pi), plus its sha256 index for display parity.
+      const beta = VRFService.verify(publicKeyHex, msgBuffer, proof);
+      const betaHex = toHexString(beta);
+      const sha256 = require('js-sha256');
+      const computedIndexHex = toHexString(new Uint8Array(sha256.array(beta)));
+
+      // Bind the expected output to the verified proof: accept either the
+      // 64-byte VRF output beta or its sha256 index; both are derived from
+      // the verified proof, so an unrelated output value cannot pass.
+      const expected = expectedVrfOutputHex.trim().toLowerCase().replace(/^0x/, '');
+
+      return expected === betaHex || expected === computedIndexHex;
     } catch (err) {
       const error = err as Error;
       setStoreError(`VRF verification failed: ${error.message}`);

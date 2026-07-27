@@ -1,8 +1,21 @@
 // Loot Service - Handles loot generation using VRF
 import { VRFService } from '../vrf/vrf.service';
 import { LOOT_CONSTANTS } from '../../constants/loot.constants';
-import { toHexString } from '../../utils/format.utils';
+import { toHexString, fromHexString } from '../../utils/format.utils';
+import { buildItemMessage } from '../../utils/message.utils';
 import { LootItem, VRFData } from '../../types/loot.types';
+
+/** Constant-length byte-array equality check */
+function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a[i] ^ b[i];
+  }
+  return diff === 0;
+}
 
 /**
  * Loot Service class - handles loot generation and verification
@@ -82,19 +95,19 @@ export class LootService {
       const items: LootItem[] = [];
       
       for (let i = 0; i < count; i++) {
-        // Create unique message for each item by appending index
-        const message = `${blockhash}-${i}`;
-        const messageBuffer = new TextEncoder().encode(message);
-        
+        // Create unique message for each item: blockhash bytes || uint32 big-endian index
+        const messageBuffer = buildItemMessage(blockhash, i);
+
         // Generate VRF for this specific message
         const vrfResult = VRFService.evaluate(privateKey, messageBuffer);
-        
+
         // Create VRF data for verification
         const vrfData: VRFData = {
           publicKey: VRFService.getPublicKeyFromPrivate(privateKey),
           proof: vrfResult.proof,
-          message,
+          message: toHexString(messageBuffer), // hex representation for display/transport
           blockhash,
+          itemIndex: i,
           index: vrfResult.index,
           vrfOutput: vrfResult.vrfOutput
         };
@@ -122,30 +135,35 @@ export class LootService {
         return false;
       }
 
-      const { message, proof, vrfOutput } = item.vrfData;
-      
-      if (!message || !proof || !vrfOutput) {
+      const { proof, vrfOutput, blockhash, itemIndex } = item.vrfData;
+
+      if (!proof || !vrfOutput || !blockhash || typeof itemIndex !== 'number') {
         return false;
       }
 
-      // Convert message to buffer
-      const messageBuffer = new TextEncoder().encode(message);
-      
       // Convert proof and vrfOutput to Uint8Array if they're strings
-      const proofBytes = typeof proof === 'string' ? 
-        new Uint8Array(proof.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []) : 
-        proof;
-      
-      const vrfOutputBytes = typeof vrfOutput === 'string' ?
-        new Uint8Array(vrfOutput.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []) :
-        vrfOutput;
+      const proofBytes = typeof proof === 'string' ? fromHexString(proof) : proof;
+      const vrfOutputBytes = typeof vrfOutput === 'string' ? fromHexString(vrfOutput) : vrfOutput;
 
-      // Verify the VRF proof
-      const computedIndex = VRFService.proofToHash(publicKey, messageBuffer, proofBytes);
-      
-      // Generate item from the VRF output to check if properties match
+      // 1. Reconstruct the message from (blockhash, itemIndex) instead of
+      //    trusting a free-form message string supplied with the item.
+      const messageBuffer = buildItemMessage(blockhash, itemIndex);
+
+      // 2. Verify the RFC 9381 VRF proof against the reconstructed message
+      //    (throws if the proof is invalid) and get the verified output beta.
+      const beta = VRFService.verify(publicKey, messageBuffer, proofBytes);
+
+      // 3. Bind the supplied output to the proof: the claimed vrfOutput must
+      //    equal proof_to_hash(pi) byte-for-byte. Without this, a valid proof
+      //    could be paired with an unrelated output that happens to map to
+      //    the claimed properties.
+      if (!bytesEqual(beta, vrfOutputBytes)) {
+        return false;
+      }
+
+      // 4. Generate item from the VRF output to check if properties match
       const verificationItem = this.generateItem(vrfOutputBytes);
-      
+
       // Check if the item properties match
       return (
         item.type === verificationItem.type &&

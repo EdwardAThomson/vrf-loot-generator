@@ -51,6 +51,15 @@ export class TradingService {
     }
 
     for (const item of items) {
+      // Sealed (committed, unrevealed) items are untradeable: trading them
+      // would require shipping their VRF output/proof, which defeats the
+      // sealed state. The owner must reveal first.
+      if (item.sealed) {
+        result.errors.push(`Item ${item.name} is sealed and cannot be traded (reveal it first)`);
+        result.isValid = false;
+        continue;
+      }
+
       // Check if item has VRF data for verification
       if (!item.vrfData) {
         result.warnings.push(`Item ${item.name} cannot be verified (no VRF data)`);
@@ -125,6 +134,12 @@ export class TradingService {
    * @returns Trade commitment object
    */
   static prepareTradeCommitment(playerId: string, items: LootItem[]): TradeCommitment {
+    const sealed = items.filter(item => item.sealed);
+    if (sealed.length > 0) {
+      throw new Error(
+        `Cannot commit sealed item(s) to a trade: ${sealed.map(i => i.name).join(', ')}. Reveal them first.`
+      );
+    }
     return CommitRevealService.createTradeCommitment(playerId, items);
   }
 

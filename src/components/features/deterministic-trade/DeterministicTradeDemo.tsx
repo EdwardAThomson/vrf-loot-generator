@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { generateAliceData, generateBobData, verifyDemoItem, DemoPlayer, DemoItem } from './generateDemoData';
+import { CommitRevealService } from '../../../services/trading/commit-reveal.service';
 import styles from './DeterministicTradeDemo.module.css';
 
 /**
@@ -110,11 +111,9 @@ export const DeterministicTradeDemo: React.FC = () => {
     addLog('');
     addLog('🔒 STEP 2: Alice commits to her items');
     
-    // Create commitment
-    const CryptoJS = require('crypto-js');
+    // Create canonical commitment (binds item identity + nonce)
     const nonce = 'alice-nonce-fixed-12345';
-    const itemsString = JSON.stringify(aliceItems);
-    const commitment = CryptoJS.SHA256(itemsString + nonce).toString();
+    const commitment = CommitRevealService.computeCommitmentHash(aliceItems, nonce);
     
     setAliceNonce(nonce);
     setAliceCommitment(commitment);
@@ -135,11 +134,9 @@ export const DeterministicTradeDemo: React.FC = () => {
     addLog('🔒 STEP 3: Bob commits to his items');
     addLog(`  Offering: ${bobItems.map(i => i.name).join(', ')}`);
     
-    // Create commitment
-    const CryptoJS = require('crypto-js');
+    // Create canonical commitment (binds item identity + nonce)
     const nonce = 'bob-nonce-fixed-67890';
-    const itemsString = JSON.stringify(bobItems);
-    const commitment = CryptoJS.SHA256(itemsString + nonce).toString();
+    const commitment = CommitRevealService.computeCommitmentHash(bobItems, nonce);
     
     setBobNonce(nonce);
     setBobCommitment(commitment);
@@ -165,11 +162,9 @@ export const DeterministicTradeDemo: React.FC = () => {
     addLog(`  Nonce: ${nonce}`);
     addLog(`  Items: ${aliceItems.map(i => i.name).join(', ')}`);
     
-    // Verify commitment
-    const CryptoJS = require('crypto-js');
-    const itemsString = JSON.stringify(aliceItems);
-    const recomputedCommitment = CryptoJS.SHA256(itemsString + nonce).toString();
-    
+    // Verify commitment (canonical recomputation)
+    const recomputedCommitment = CommitRevealService.computeCommitmentHash(aliceItems, nonce);
+
     if (recomputedCommitment === commitment) {
       addLog('  ✅ Commitment verified!');
     } else {
@@ -193,11 +188,9 @@ export const DeterministicTradeDemo: React.FC = () => {
     addLog(`  Nonce: ${nonce}`);
     addLog(`  Items: ${bobItems.map(i => i.name).join(', ')}`);
     
-    // Verify commitment
-    const CryptoJS = require('crypto-js');
-    const itemsString = JSON.stringify(bobItems);
-    const recomputedCommitment = CryptoJS.SHA256(itemsString + nonce).toString();
-    
+    // Verify commitment (canonical recomputation)
+    const recomputedCommitment = CommitRevealService.computeCommitmentHash(bobItems, nonce);
+
     if (recomputedCommitment === commitment) {
       addLog('  ✅ Commitment verified!');
     } else {

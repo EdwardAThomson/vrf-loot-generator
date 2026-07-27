@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { InventoryStoreState, InventoryStoreActions, LootItem } from '../types/loot.types';
+import {
+  InventoryStoreState,
+  InventoryStoreActions,
+  LootItem,
+  SealedLootManifest,
+  SealedPrivateRecord,
+  SealedInventoryRecord,
+} from '../types/loot.types';
 
 type InventoryStore = InventoryStoreState & InventoryStoreActions;
 
@@ -11,7 +18,13 @@ const useInventoryStore = create<InventoryStore>()(
       items: [],
       selectedItems: [],
       totalItems: 0,
-      
+      // Sealed loot slice. This store is NOT persisted (no zustand persist
+      // middleware here), so private records live in memory only and are
+      // lost on refresh. That is deliberate for the demo; a real client
+      // would encrypt-at-rest before persisting private records.
+      sealedManifest: null,
+      sealedRecords: [],
+
       // Actions
       addItem: (item: Omit<LootItem, 'id'>) => set((state) => {
         const newItems = [...state.items, { ...item, id: (Date.now() + Math.random()).toString() }];
@@ -50,11 +63,48 @@ const useInventoryStore = create<InventoryStore>()(
       
       clearSelection: () => set({ selectedItems: [] }),
       
-      clearInventory: () => set({ 
-        items: [], 
-        selectedItems: [], 
-        totalItems: 0 
+      clearInventory: () => set({
+        items: [],
+        selectedItems: [],
+        totalItems: 0
       }),
+
+      sealLoot: (manifest: SealedLootManifest, privateRecords: SealedPrivateRecord[]) => set(() => ({
+        sealedManifest: manifest,
+        sealedRecords: privateRecords.map((record): SealedInventoryRecord => ({
+          id: `sealed-${manifest.blockhash}-${record.itemIndex}`,
+          status: 'sealed',
+          itemIndex: record.itemIndex,
+          commitment: manifest.commitments[record.itemIndex],
+          privateRecord: record
+        }))
+      })),
+
+      revealSealedItem: (itemIndex: number): LootItem | null => {
+        const { sealedRecords } = get();
+        const record = sealedRecords.find(
+          r => r.itemIndex === itemIndex && r.status === 'sealed'
+        );
+        if (!record) {
+          return null;
+        }
+        // The revealed item enters the normal (tradeable) inventory with its
+        // full vrfData; the sealed flag is explicitly cleared.
+        const revealedItem: LootItem = { ...record.privateRecord.item, sealed: false };
+        set((state) => {
+          const newItems = [...state.items, revealedItem];
+          return {
+            items: newItems,
+            totalItems: newItems.length,
+            sealedRecords: state.sealedRecords.map(r =>
+              r.itemIndex === itemIndex ? { ...r, status: 'revealed' as const } : r
+            )
+          };
+        });
+        return revealedItem;
+      },
+
+      clearSealedLoot: () => set({ sealedManifest: null, sealedRecords: [] }),
       
       // Getters
       getSelectedItems: () => {
