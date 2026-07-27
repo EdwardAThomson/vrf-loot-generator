@@ -74,9 +74,12 @@ The React app will start on port 3000.
 
 ### 🔧 Known Limitations
 - Trade completion flow is basic (demo level)
-- No actual item transfer (uses mock data)
 - Limited error handling for network issues
 - No user authentication (names only)
+
+### Scripted Test (no browser)
+
+With the server running, `npm run trade-sim` (from the project root) drives a full two-client trade over the socket: real ECVRF keypairs and items, canonical commit-reveal hashes matching the web client, peer reveals verified against commitments, and VRF verification of every item received over the wire. Useful for regression-testing the server protocol without clicking through the UI. Note: commitment hashes and nonces are exchanged in-process because the server relay does not carry them (the web client has the same limitation).
 
 ## Troubleshooting
 

@@ -56,7 +56,7 @@ This file generates cryptographically valid items using real VRF operations.
 ### Fixed Inputs (Deterministic)
 
 ```typescript
-// Real elliptic curve private keys (P-256 curve)
+// Real elliptic curve private keys (ed25519, RFC 9381 ECVRF)
 const ALICE_PRIVATE_KEY = '5d0247d9e4e1ece46a703365875d4c80355781f4ea632e0e703fc7537ceab0cb';
 const BOB_PRIVATE_KEY = 'df9a386c02ebc0df405cc256057b8886fdfa0fcd55b04409870fa6aa3b56a3ad';
 
@@ -395,32 +395,32 @@ const handleInitiateTrade = () => {
 
 **Cryptographic Operation:**
 ```
-commitment = SHA256(JSON.stringify(items) + nonce)
+commitment = SHA256(canonicalize({ v: 1, items: committedItemFields, nonce }))
 ```
+
+The hash uses a canonical (deterministic) serialization and binds item identity fields only (id, name, type, rarity, modifier, and the VRF identity data), so key ordering and display-only fields cannot change the hash. See `CommitRevealService.computeCommitmentHash`.
 
 **Actions:**
 1. Check trade exists (via state or ref)
 2. Create fixed nonce: `'alice-nonce-fixed-12345'`
-3. Serialize items to JSON string
-4. Compute SHA256 hash of (items + nonce)
-5. Store nonce and commitment in state AND refs
-6. Set step to 'ALICE_COMMITTED'
+3. Compute the canonical commitment hash over (items, nonce)
+4. Store nonce and commitment in state AND refs
+5. Set step to 'ALICE_COMMITTED'
 
 ```typescript
 const handleAliceCommit = () => {
+  // Check both state and ref for tradeId (ref is for auto-run)
   if (!tradeId && !tradeIdRef.current) return;
-  
-  const CryptoJS = require('crypto-js');
+
+  // Create canonical commitment (binds item identity + nonce)
   const nonce = 'alice-nonce-fixed-12345';
-  const itemsString = JSON.stringify(aliceItems);
-  const commitment = CryptoJS.SHA256(itemsString + nonce).toString();
-  
-  // Store in both state and ref
+  const commitment = CommitRevealService.computeCommitmentHash(aliceItems, nonce);
+
   setAliceNonce(nonce);
   setAliceCommitment(commitment);
   aliceNonceRef.current = nonce;
   aliceCommitmentRef.current = commitment;
-  
+
   addLog(`  Commitment: ${commitment.substring(0, 20)}...`);
   setCurrentStep('ALICE_COMMITTED');
 };
@@ -450,9 +450,11 @@ const handleAliceCommit = () => {
 
 **Verification Process:**
 ```
-recomputed = SHA256(JSON.stringify(revealed_items) + revealed_nonce)
+recomputed = SHA256(canonicalize({ v: 1, items: revealed_item_fields, nonce }))
 valid = (recomputed === original_commitment)
 ```
+
+Verification uses `CommitRevealService.verifyCommitmentHash`, which recomputes the same canonical hash from the revealed items and nonce.
 
 **Actions:**
 1. Check trade exists
@@ -697,9 +699,9 @@ const publicKey = VRFService.getPublicKeyFromPrivate(ALICE_PRIVATE_KEY);
 ```
 
 **What happens:**
-- Private key (256-bit scalar) → Public key (point on P-256 curve)
+- Private key (32-byte seed) → Public key (32-byte ed25519 point, per RFC 9381 ECVRF)
 - Public key is used for verification
-- Private key is used for signing/generating VRF output
+- Private key is used for generating the VRF output and proof
 
 ### 2. VRF Item Generation
 
@@ -709,10 +711,10 @@ const vrfResult = VRFService.evaluate(privateKey, messageBuffer);
 ```
 
 **What happens:**
-1. Message = `blockhash-index` (e.g., `'alice-demo-blockhash-fixed-12345-0'`)
-2. VRF evaluates: `output = VRF(privateKey, message)`
+1. Message = `blockhash_bytes || uint32_be(index)` (fixed-width binary encoding, no ambiguity between blockhash and index)
+2. VRF evaluates: `output = VRF(privateKey, message)` (80-byte proof, 64-byte output)
 3. Returns: `{ vrfOutput, proof, index }`
-4. Item properties derived from `vrfOutput` bytes
+4. Item properties derived from `SHA-256(vrfOutput)` bytes
 
 ### 3. Commitment Hash
 
